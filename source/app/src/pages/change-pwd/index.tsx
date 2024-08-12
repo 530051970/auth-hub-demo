@@ -11,6 +11,7 @@ import './style.scss';
 const ChangePWD: FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [projectName, setProjectName] = useState("" as string);
   const [selectedThird, setSelectedThird] = useState("" as string);
   // const [loginType, setLoginType] = useState([] as any[]);
   const [newPass, setNewPass] = useState("" as string);
@@ -45,12 +46,7 @@ const ChangePWD: FC = () => {
         return yaml.parse(data);
       }
       loadConfig().then(configData =>{
-        // setConfig(configData)
-        // session = localStorage.getItem("session")
-        // username = localStorage.getItem("userName")
-        // loginType = localStorage.getItem("loginType")
-        // provider = localStorage.getItem("providerName")
-        // author = configData.author
+        setProjectName(config.project)
         let thirdLogin, region, clientId = null
         if(configData.login.third && configData.login.third.length > 0){
           // const tmp_login_params = new Map<string, any>();
@@ -208,7 +204,8 @@ useEffect(()=>{
     <div className="changepwd-div">
       {error!=null && <div className='error'><Flashbar items={items} /></div>}
       <div className='container'>
-        <img src={banner} alt='banner' className='banner'/>
+        {/* <img src={banner} alt='banner' className='banner'/> */}
+        <div className='banner'>{projectName}</div>
         <div className='sub-title'>Supported by {params.author}</div>
         <div className='tab' style={{paddingLeft:'10%'}}>
           <div style={{height:270,width:'90%'}}>

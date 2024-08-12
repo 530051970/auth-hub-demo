@@ -1,8 +1,8 @@
 {
-  "name": "zenith-cloudkit",
+  "name": "auth-hub-demo",
   "version": "0.1.0",
   "bin": {
-    "zenith-cloudkit": "bin/zenith-cloudkit.js"
+    "auth-hub-demo": "bin/auth-hub-demo.js"
   },
   "scripts": {
     "build": "tsc",

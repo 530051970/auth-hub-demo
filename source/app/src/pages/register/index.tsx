@@ -10,7 +10,8 @@ import './style.scss';
 const Register: FC = () => {
   const navigate = useNavigate();
   const [error, setError] = useState(null as any);
-  const [selectedThird, setSelectedThird]  = useState("" as string);
+  const [projectName, setProjectName] = useState("" as string);
+  const [selectedThird, setSelectedThird] = useState("" as string);
   const [loginType, setLoginType] = useState([] as any[]);
   const [thirdLogin, setThirdLogin] = useState([] as any[]);
   const [author, setAuthor] = useState("" as string)
@@ -28,6 +29,7 @@ const Register: FC = () => {
       return yaml.parse(data);
     }
     loadConfig().then(configData =>{
+      setProjectName(configData.project)
       setAuthor(configData.author)
       if(configData.login.user){
         tmp_login_type.push({
@@ -96,7 +98,8 @@ const Register: FC = () => {
   return (
     <div className="register-div">
       <div className='container'>
-        <img src={banner} alt='banner' className='banner'/>
+        {/* <img src={banner} alt='banner' className='banner'/> */}
+        <div className='banner'>{projectName}</div>
         <div className='sub-title'>Supported by {author}</div>
         <div className='tab' style={{paddingLeft:'10%'}}>
           <div style={{height:270,width:'90%'}}>

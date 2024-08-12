@@ -29,12 +29,12 @@
 1. 克隆代码仓库到本地机器:
 
    ```bash
-   git clone https://github.com/530051970/zenith-cloudkit.git
+   git clone https://github.com/530051970/auth-hub-demo.git
 
 2. 进入 Zenith Cloudkit 目录:
 
    ```bash
-   cd zenith-cloudkit/source/app
+   cd auth-hub-demo/source/app
 
 3. 安装必要的依赖:
 

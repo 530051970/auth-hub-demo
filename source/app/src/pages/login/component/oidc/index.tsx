@@ -1,5 +1,7 @@
 import { Input, Select } from '@cloudscape-design/components';
 import './style.scss';
+import { useContext, useEffect } from 'react';
+import ConfigContext from 'context/config-context';
 interface OIDCProps {
     provider: any,
     username: string,
@@ -20,12 +22,23 @@ const OIDC = (props: OIDCProps) => {
            setPassword,
            setSelectedProviderName
            } = props
+    const context = useContext(ConfigContext);
+
+    const updateContext =(oidcContent: any)=>{
+      context?.updateOIDC(oidcContent)
+    }
+
+    useEffect(()=>{
+      console.log(`oidcOptions is ${oidcOptions}`)
+    },[])
+    
     return (<div className='oidc'>
         <div className='item'>
           <Select
             placeholder='Please choose one OIDC provider'
             selectedOption={provider}
             onChange={({ detail }:{detail: any}) => {
+               updateContext(detail.selectedOption)
                setProvider(detail.selectedOption)
                setSelectedProviderName(detail.selectedOption.value)
               }

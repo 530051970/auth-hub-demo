@@ -29,12 +29,12 @@ To install Zenith Cloudkit, simply follow these steps:
 1. Clone this repository to your local machine:
 
    ```bash
-   git clone https://github.com/530051970/zenith-cloudkit.git
+   git clone https://github.com/530051970/auth-hub-demo.git
 
 2. Navigate to the directory containing Zenith Cloudkit:
 
    ```bash
-   cd zenith-cloudkit/source/app
+   cd auth-hub-demo/source/app
 
 3. Install the necessary dependencies:
 

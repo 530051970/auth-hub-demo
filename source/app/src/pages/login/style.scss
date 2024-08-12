@@ -19,9 +19,18 @@
   // box-shadow: 10px 10px 5px 0px rgba(240, 238, 238, 0.75);
 }
 .banner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   height: 70px;
-  margin-left: 25%;
+  width:283px;
+  margin-left: 26%;
   margin-top: 20px;
+  // text-align: center;
+  vertical-align: middle;
+  font-size: 30px;
+  font-family: fantasy;
+  font-weight: 800;
 }
 
 .sub-title {

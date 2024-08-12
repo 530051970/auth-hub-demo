@@ -1,11 +1,12 @@
 import Axios from 'axios';
 import { COMMON_ALERT_TYPE } from 'pages/common-alert/types/data_config';
+import { alertMsg } from 'ts/common';
 import { AlertType } from 'ts/common-alert/types';
 import { ApiRequest } from 'ts/tools/types';
-import { alertMsg } from './tools';
-import { User } from 'oidc-client-ts';
-import { AMPLIFY_CONFIG_JSON, BACKEND_URL_KEY } from 'ts/common';
-import { AmplifyConfigType } from 'ts/types';
+
+// import { User } from 'oidc-client-ts';
+// import { AMPLIFY_CONFIG_JSON, BACKEND_URL_KEY } from 'ts/common';
+// import { AmplifyConfigType } from 'ts/types';
 
 // Back-end Request Url
 // let STORAGE_BACK_URL = localStorage.getItem(BACKEND_URL_KEY);
@@ -38,20 +39,21 @@ const NO_ACCESS_CODE = 1003;
  */
 axios.interceptors.request.use(
   (config: any) => {
-    const configJSONObj: AmplifyConfigType = localStorage.getItem(
-      AMPLIFY_CONFIG_JSON
-    )
-      ? JSON.parse(localStorage.getItem(AMPLIFY_CONFIG_JSON) || '')
-      : {};
-    const token =
-      process.env.REACT_APP_ENV === 'local' ||
-      process.env.REACT_APP_ENV === 'development'
-        ? ''
-        : User.fromStorageString(
-            localStorage.getItem(
-              `oidc.user:${configJSONObj.aws_oidc_issuer}:${configJSONObj.aws_oidc_client_id}`
-            ) || ''
-          )?.id_token;
+    // const configJSONObj: AmplifyConfigType = localStorage.getItem(
+    //   AMPLIFY_CONFIG_JSON
+    // )
+    //   ? JSON.parse(localStorage.getItem(AMPLIFY_CONFIG_JSON) || '')
+    //   : {};
+    // const token =
+    //   process.env.REACT_APP_ENV === 'local' ||
+    //   process.env.REACT_APP_ENV === 'development'
+    //     ? ''
+    //     : User.fromStorageString(
+    //         localStorage.getItem(
+    //           `oidc.user:${configJSONObj.aws_oidc_issuer}:${configJSONObj.aws_oidc_client_id}`
+    //         ) || ''
+    //       )?.id_token;
+    const token = 
     config.data = JSON.stringify(config.data);
     config.headers = {
       'Content-Type': 'application/json',

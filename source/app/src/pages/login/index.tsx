@@ -2,14 +2,20 @@ import { AuthFlowType, CognitoIdentityProviderClient, InitiateAuthCommand, NotAu
 import { Button, Checkbox, Flashbar, Grid, Link, SpaceBetween, Spinner, Tabs } from '@cloudscape-design/components';
 import banner from 'banner.png';
 import { LOGIN_TYPE } from 'enum/common_types';
-import { FC, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { FC, useContext, useEffect, useState } from 'react';
+import { redirect, useNavigate } from 'react-router-dom';
 import { RouterEnum } from 'routers/routerEnum';
 import yaml from 'yaml';
 import OIDC from './component/oidc';
 import SNS from './component/sns';
 import User from './component/user';
 import './style.scss';
+// import ConfigContext from 'context/config-context';
+import axios, { AxiosError } from 'axios';
+import { Constant } from 'common/constants';
+import { constant } from 'lodash';
+import apiClient from 'request/client';
+// import { authConfig } from 'context/authConfig';
 
 const Login: FC = () => {
   const [activeTabId, setActiveTabId] = useState(LOGIN_TYPE.OIDC);
@@ -24,13 +30,15 @@ const Login: FC = () => {
   const [selectedThird, setSelectedThird]  = useState("" as string);
   const [tabs, setTabs] = useState([] as any[]);
   const [thirdLogin, setThirdLogin] = useState([] as any[]);
+  const [projectName, setProjectName] = useState("" as string)
   const [author, setAuthor] = useState("" as string)
   const [version, setVersion] = useState(0)
   const [loginParams, setLoginParams] = useState(null as any);
   const [isLoading, setIsloading] = useState(true)
+  // const authConfig = useAuthConfig()
+  // const configContext = useContext(ConfigContext);
 
   useEffect(()=>{
-    console.log("=====login.tsx")
     const loadConfig = async ()=> {
       let response = await fetch('/config.yaml')
       let data = await response.text()
@@ -46,6 +54,7 @@ const Login: FC = () => {
       if(config!==null){
       let tmp_tabs: any[] =[]
       let tmp_third_login: any[] =[]
+      setProjectName(config.project)
       setAuthor(config.author)
       if(config.login.user){
         tmp_tabs.push({
@@ -81,7 +90,12 @@ const Login: FC = () => {
             label: item.name,
             iconUrl:`../../imgs/${item.iconUrl}.png`,
             value: item.name,
+            clientId: item.clientId,
+            clientSecret: item.clientSecret,
+            redirectUri: item.redirectUri,
+            disabled: item.disabled || false,
             tags: [item.description]
+            
           })
           tmp_login_params.set(item.name, item)
         })
@@ -125,7 +139,7 @@ const Login: FC = () => {
     navigate(RouterEnum.Register.path)
   }
 
-  const login = () => {
+  const loginSystem = () => {
     const ver = version
     // console.log("selectedProvider is:"+selectedProvider.value)
     if(activeTabId === LOGIN_TYPE.OIDC && selectedProvider == null){
@@ -144,14 +158,20 @@ const Login: FC = () => {
       return false;
     }
 
-    const loginParam = loginParams.get(selectedProvider.value)
+    // const loginParam = loginParams.get(selectedProvider)
     switch(selectedProvider.value){
       case "Cognito":
-        cognitoLogin(loginParam);
+        cognitoLogin();
         break;
       default:
+        oidcLogin()
         break;
     }
+    // configContext?.login({
+    //   access_token: "",
+    //   provider: {},
+    //   user: {}
+    // })
     // navigate(RouterEnum.Home.path)
   }
   
@@ -173,20 +193,9 @@ const Login: FC = () => {
   //   },
   // };
 
-  const cognitoLogin = async(loginParam:any)=>{
-    // const { initiateAuth } = require('../tools/auth/initiateAuth');
-  //   const params = {
-  //     AuthFlow: AuthFlowType.USER_PASSWORD_AUTH,
-  //     // UserPoolId:loginParam.userPoolId,
-  //     ClientId: loginParam.clientId,
-  //     // ChallengeName:"",
-  //     AuthParameters: {
-  //       USERNAME: username,
-  //       PASSWORD: password,
-  //   },
-  // };
+  const cognitoLogin = async()=>{
   try {
-    const authResponse = await initiateAuth(loginParam.clientId, loginParam.region, username, password);
+    const authResponse = await initiateAuth(selectedProvider.clientId, selectedProvider.region, username, password);
       if(authResponse.ChallengeName==="NEW_PASSWORD_REQUIRED"){
         navigate(RouterEnum.ChangePWD.path, { 
           state: {
@@ -197,20 +206,11 @@ const Login: FC = () => {
             provider: selectedProviderName,
             author,
             thirdLogin,
-            region: loginParam.region,
-            clientId: loginParam.clientId
+            region: selectedProvider.region,
+            clientId: selectedProvider.clientId
           }
         });
       }
-    // const command = new InitiateAuthCommand(params);  
-    // const cognitoClient = new CognitoIdentityProviderClient({
-    //   region: loginParam.region,
-    // });
-    // console.log(`cognitoClient is ${cognitoClient}`)
-    // console.log(`command is ${command}`)
-    // const { AuthenticationResult } = await cognitoClient.send(command);
-    // console.log(`AuthenticationResult is ${AuthenticationResult}`)
-    // navigate(RouterEnum.Home.path)
     if (authResponse.AuthenticationResult) {
       localStorage.setItem("loginType", activeTabId || '');
       localStorage.setItem("providerName", selectedProviderName || '');
@@ -229,25 +229,68 @@ const Login: FC = () => {
     } else {
       setError("Unknown error, please contact the administrator.")
     }
-    // console.error("Error signing in: ", error);
-    // throw error;
   }
 }
 
-// useEffect(()=>{
-//   if(error!==null || error!==""){
-//     setItems([{
-//       header: error,
-//       type: 'error',
-//       content: null,
-//       dismissible: true,
-//       dismissLabel: "Dismiss message",
-//       onDismiss: () => setItems([]),
-//       id: "message_1"
-//     }])
-//   }
-// },[error])
-  
+const oidcLogin = async()=>{
+  let tokenInfo: any
+  let response: any
+  console.log("==================")
+  console.log(selectedProvider)
+  try{
+    response = await apiClient.post('/login', {
+      redirect_uri: selectedProvider.redirectUri,
+      client_id: selectedProvider.clientId,
+      provider: selectedProvider.label.toLowerCase(),
+      username,
+      password
+    })
+
+    console.log("##############")
+    console.log(response)
+    // tokenInfo = await axios.post(
+    //   `${selectedProvider.redirectUri}/oidc/token`,
+    //   {
+    //     grant_type: 'password',
+    //     client_id: selectedProvider.clientId,
+    //     client_secret: selectedProvider.clientSecret,
+    //     scope: 'openid',
+    //     username,
+    //     password
+    //   },
+    //   {
+    //     headers: {
+    //       'Content-Type': 'application/x-www-form-urlencoded'
+    //     }
+    //   }
+    // );
+  } catch (error){
+    if(error instanceof AxiosError) {
+      setError(JSON.parse(error.response?.data.detail).error_description)
+    } else {
+      setError("Unknown error, please contact the administrator.")
+    }
+    return
+    // setError(error.error_description)
+  }
+  localStorage.setItem(Constant.PROVIDER, selectedProvider.name)
+  localStorage.setItem(Constant.CLIENT_ID, selectedProvider.client_id)
+  console.log(response.data.body.access_token)
+  const userInfo: any = await axios.get(
+    `${selectedProvider.redirectUri}/oidc/me`,
+    {
+      headers: {
+        'Authorization': `Bearer ${response.data.body.access_token}`
+      }
+    }
+  );
+  localStorage.setItem(Constant.OIDC_REDIRECT_URL, selectedProvider.redirectUri);
+  localStorage.setItem(Constant.TOKEN, JSON.stringify(response.data.body));
+  localStorage.setItem(Constant.USER, JSON.stringify(userInfo.data));
+  // localStorage.setItem(Constant.USER, JSON.stringify(userInfo.data));
+  navigate(RouterEnum.Home.path)
+}
+
   if(isLoading){
     return (
       <Spinner/>
@@ -259,7 +302,8 @@ const Login: FC = () => {
       {/* {error!=null && <div className='error'>{error}</div>} */}      
       <div className='container'>
         {/* <div style={{padding:15}}> */}
-        <img src={banner} alt='banner' className='banner'/>
+        <div className='banner'>{projectName}</div>
+        {/* <img src={banner} alt='banner' className='banner'/> */}
         <div className='sub-title'>Supported by {author}</div>
         <div className='tab' style={{paddingLeft:'10%'}}>
         <Tabs
@@ -291,7 +335,7 @@ const Login: FC = () => {
     </Grid>
     </div>
     <div className='bottom-button'>
-    <Button variant="primary" className='login-buttom' onClick={login}>Log in</Button>
+    <Button variant="primary" className='login-buttom' onClick={loginSystem}>Log in</Button>
     </div>
     <div style={{display:'none'}}>{selectedProviderName}</div>
     <div style={{color: 'rgb(128, 128, 128)', fontSize: 14,marginTop: 30, width:'90%'}}>

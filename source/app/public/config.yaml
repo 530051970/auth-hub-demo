@@ -1,4 +1,6 @@
-author: "hubin@CSDC"
+project: "Auth Hub Demo"
+version: "0.0.1"
+author: "IndustryBuilders Team"
 login:
   user: 
     label: "Username"
@@ -15,26 +17,34 @@ login:
       - name: "Cognito"
         iconUrl: "cognito"
         description: "AWS's built-in user authentication service"
-        region: "us-east-1"
-        clientId: "ug1oiijdio1e92rfrptd9jg75"  
-        userPoolId: "us-east-1_PaWe18vwE"
+        disabled: true
+        # region: "us-east-1"
+        # clientId: "ug1oiijdio1e92rfrptd9jg75"  
+        # userPoolId: "us-east-1_PaWe18vwE"
       - name: "Authing"
         iconUrl: "authing"
         description: "Authentication service for ensuring application security"
-      - name: "Okta"
-        iconUrl: "okta"
-        description: "A service that focuses on identity and access management"
-  third:
-    - type: "google"
-      iconUrlSelected: "google_in"
-      iconUrl: "google"
-      iconStyle: {"width":39,"marginTop":-2}
-    - type: "facebook"
-      iconUrlSelected: "facebook_in"
-      iconUrl: "facebook"
-      iconStyle: {"width":34}
-    - type: "linkedin"
-      iconUrlSelected: "linkedin_in"
-      iconUrl: "linkedin"
-      iconStyle: {"width":35}
+        clientId: "66b769cf5c2d439dfd37f237"
+        redirectUri: "https://demo-center.authing.cn"
+        issuer: ""
+        audience: ""
+      - name: "Keycloak"
+        iconUrl: "keycloak"
+        description: "Open Source Identity and Access Management"
+        clientId: "668d3fa8e264cf3675dcc42a"
+        redirectUri: "https://intelli-agent.authing.cn"
+        diabled: true
+  # third:
+  #   - type: "google"
+  #     iconUrlSelected: "google_in"
+  #     iconUrl: "google"
+  #     iconStyle: {"width":39,"marginTop":-2}
+  #   - type: "facebook"
+  #     iconUrlSelected: "facebook_in"
+  #     iconUrl: "facebook"
+  #     iconStyle: {"width":34}
+  #   - type: "linkedin"
+  #     iconUrlSelected: "linkedin_in"
+  #     iconUrl: "linkedin"
+  #     iconStyle: {"width":35}
   
