@@ -31,7 +31,7 @@ apiClient.interceptors.request.use(
             return Promise.reject(error);
           }
         } else {
-          config.headers['Access-Control-Allow-Origin'] = ['*'];
+          // config.headers['Access-Control-Allow-Origin'] = ['*'];
           config.headers['Authorization'] = `Bearer ${accessToken}`;
           config.headers['OidcIssuer'] = localStorage.getItem(Constant.OIDC_REDIRECT_URL);
 
