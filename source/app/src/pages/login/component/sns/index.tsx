@@ -1,4 +1,4 @@
-import { Input } from '@cloudscape-design/components';
+import { Button, Grid, Input, SpaceBetween } from '@cloudscape-design/components';
 import './style.scss';
 interface SNSProps{
    username:string
@@ -19,17 +19,24 @@ const SNS = (props: SNSProps) => {
         <Input
       onChange={({ detail }) => setUsername(detail.value)}
       value={username}
-      placeholder="Please input username"
+      placeholder="Please input phone no."
     />
         </div>
+        <Grid gridDefinition={[{ colspan: 7},{ colspan: 5}]}>
         <div className='item'>
         <Input
         type='password'
       onChange={({ detail }) => setPassword(detail.value)}
       value={password}
-      placeholder="Please input password"
+      placeholder="Please input sns code"
     />
+        </div><div className='item'>
+          <div style={{height:"calc(100% - 18px)", width:"100%" ,border:"1px solid rgba(128, 128, 128, 0.3803921569)" ,display:'flex', alignItems:'center',justifyContent:'center'}}>
+          GET SNS CODE
+          </div>
+        
         </div>
+        </Grid>
     {/* </Grid>    */}
     
     

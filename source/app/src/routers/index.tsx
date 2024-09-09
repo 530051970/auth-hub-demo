@@ -1,3 +1,5 @@
+import { ROUTES } from 'common/constants';
+import ConfigProvider from 'context/config-provider';
 import ChangePWD from 'pages/change-pwd';
 import FindPWD from 'pages/find-pwd';
 import Login from 'pages/login';
@@ -7,17 +9,18 @@ import { Suspense } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 const AppRouter = () => {
-  console.log(`!!!!!!APPRouter`)
   return (
     <Suspense fallback={null}>
       <BrowserRouter>
+      <ConfigProvider>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/find-password" element={<FindPWD />} />
-        <Route path="/create-account" element={<Register />} />
-        <Route path="/change-password" element={<ChangePWD />} />
-        <Route path="/" element={<Home />}/> 
+        <Route path={ROUTES.Login} element={<Login />} />
+        <Route path={ROUTES.FindPWD} element={<FindPWD />} />
+        <Route path={ROUTES.Register} element={<Register />} />
+        <Route path={ROUTES.ChangePWD} element={<ChangePWD />} />
+        <Route path={ROUTES.Home} element={<Home />}/> 
       </Routes>
+      </ConfigProvider>
       </BrowserRouter>
     </Suspense>
   );

@@ -1,46 +1,34 @@
 
 import jwtDecode from 'jwt-decode';
 import apiClient from './client';
-import { Constant } from 'common/constants';
-import { useContext } from 'react';
-import ConfigContext from 'context/config-context';
 import axios from 'axios';
+import { API_URL, CLIENT_ID, OIDC_REDIRECT_URL, OIDC_STORAGE, PROVIDER, TOKEN, USER } from 'common/constants';
 
-// curl --request POST \
-//   --url https://<authing-domain>/oidc/token \
-//   --header 'Content-Type: application/x-www-form-urlencoded' \
-//   --data 'grant_type=refresh_token
-    //  &client_id=<your-client-id>
-    // &client_secret=<your-client-secret>
-    // &refresh_token=<your-refresh-token>&scope=openid'
 export const refreshAccessToken = async () => {
-  // const { clientId, oidcProvider } = oidcInfo;
-  // const refreshToken = localStorage.getItem('refresh_token');
-  const refreshToken = JSON.parse(localStorage.getItem(Constant.TOKEN) || "").refresh_token;
-  const provider = localStorage.getItem(Constant.PROVIDER);
-  const clientId = localStorage.getItem(Constant.CLIENT_ID)
+  const refreshToken = JSON.parse(localStorage.getItem(TOKEN) || "").refresh_token;
+  const oidc = JSON.parse(localStorage.getItem(OIDC_STORAGE) || "")
+  // const provider = localStorage.getItem(PROVIDER);
+  // const clientId = localStorage.getItem(CLIENT_ID)
 
   if (!refreshToken) {
     throw new Error('No refresh token available');
   }
-  if (!provider) {
+  if (!oidc.provider) {
     throw new Error('No provider available');
   }
-  if (!clientId) {
+  if (!oidc.client_id) {
     throw new Error('No client available');
   }
   if(!apiClient) return
-  const response = await apiClient.post('token/refresh', {
-    // grant_type: 'refresh_token',
-    oidc_provider: provider,
-    client_id: clientId,
-    // client_secret: clientSecret,
+  const response = await apiClient.post('/auth/token/refresh', {
+    provider: oidc.provider.toLowerCase(),
+    client_id: oidc.client_id,
     refresh_token: refreshToken,
+    redirect_uri: oidc.redirect_uri
   });
 
-  const { access_token } = response.data;
-//   setLocalToken(access_token);
-  localStorage.setItem(Constant.TOKEN, response.data)
+  const { access_token } = response.data.body;
+  localStorage.setItem(TOKEN, JSON.stringify(response.data.body))
   return access_token;
 };
 
@@ -53,8 +41,9 @@ export const isTokenExpired = (token:string) => {
 
 
 export const logout = () => {
-    const redirectUri = localStorage.getItem(Constant.OIDC_REDIRECT_URL)
-    const token = localStorage.getItem(Constant.TOKEN)
+    const oidc = JSON.parse(localStorage.getItem(OIDC_STORAGE) || "")
+    const redirectUri = oidc.redirect_uri
+    const token = localStorage.getItem(TOKEN)
     if(!redirectUri || !token) return
     axios.get(
         `${redirectUri}/api/v2/logout`,
@@ -64,16 +53,18 @@ export const logout = () => {
           }
         }
     );
-    localStorage.removeItem(Constant.TOKEN);
-    localStorage.removeItem(Constant.USER);
-    localStorage.removeItem(Constant.API_URL);
+    localStorage.removeItem(TOKEN);
+    localStorage.removeItem(USER);
+    localStorage.removeItem(API_URL);
+    localStorage.removeItem(OIDC_STORAGE);
+    // localStorage.removeItem()
     window.location.href='/login';
 };
 
 
 export const changePassword = () => {
-  const redirectUri = localStorage.getItem(Constant.OIDC_REDIRECT_URL)
-  const token = localStorage.getItem(Constant.TOKEN)
+  const redirectUri = localStorage.getItem(OIDC_REDIRECT_URL)
+  const token = localStorage.getItem(TOKEN)
   if(!redirectUri || !token) return
   axios.get(
       `${redirectUri}/api/v2/logout`,
@@ -83,8 +74,8 @@ export const changePassword = () => {
         }
       }
   );
-  localStorage.removeItem(Constant.TOKEN);
-  localStorage.removeItem(Constant.USER);
-  localStorage.removeItem(Constant.API_URL);
+  localStorage.removeItem(TOKEN);
+  localStorage.removeItem(USER);
+  localStorage.removeItem(API_URL);
   window.location.href='/login';
 };

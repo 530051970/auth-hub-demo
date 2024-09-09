@@ -11,9 +11,10 @@
  *  and limitations under the License.
  */
 
+import { Duration } from 'aws-cdk-lib';
 import { AuthorizationType, Cors, EndpointType, LambdaIntegration, MethodLoggingLevel, RestApi, TokenAuthorizer } from 'aws-cdk-lib/aws-apigateway';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
-import { Function, Code, Runtime, LayerVersion } from 'aws-cdk-lib/aws-lambda';
+import { Function, Code, Runtime, LayerVersion, Alias } from 'aws-cdk-lib/aws-lambda';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
@@ -61,15 +62,24 @@ export interface AuthHubProps {
           runtime: Runtime.PYTHON_3_11,
           code: Code.fromAsset('lib/auth-hub/lambda'),
           handler: 'auth_api.handler',
+          memorySize: 4096, // 
+          timeout: Duration.seconds(10), 
           layers: [authLayer]
+        });
+
+        const version = authFunction.currentVersion;
+        new Alias(this, 'AuthFunctionAlias', {
+            aliasName: 'AuthFunctionAlias',
+            version,
+            provisionedConcurrentExecutions: 2,
         });
     
-        const authAuthorizerFunction = new Function(this, `${solutionName}AuthAuthorizerFunction`, {
-          runtime: Runtime.PYTHON_3_11,
-          code: Code.fromAsset('lib/auth-hub/lambda'),
-          handler: 'authorizer.handler',
-          layers: [authLayer]
-        });
+        // const authAuthorizerFunction = new Function(this, `${solutionName}AuthAuthorizerFunction`, {
+        //   runtime: Runtime.PYTHON_3_11,
+        //   code: Code.fromAsset('lib/auth-hub/lambda'),
+        //   handler: 'authorizer.handler',
+        //   layers: [authLayer]
+        // });
     
         this.apigw = new RestApi(this, `${solutionName}AuthAPI`, {
           restApiName: `${solutionName}AuthAPI Service`,
@@ -97,26 +107,17 @@ export interface AuthHubProps {
           }
         });
     
-        const authorizer = new TokenAuthorizer(this, `${solutionName}AuthAuthorizer`, {
-          handler: authAuthorizerFunction
-        });
+        // const authorizer = new TokenAuthorizer(this, `${solutionName}AuthAuthorizer`, {
+        //   handler: authAuthorizerFunction
+        // });
         const loginResource = this.apigw.root.addResource('login')
-        loginResource.addMethod('POST', new LambdaIntegration(authFunction), {
-          authorizer,
-          authorizationType: AuthorizationType.CUSTOM
-        });
+        loginResource.addMethod('POST', new LambdaIntegration(authFunction));
         const tokenResource = this.apigw.root.addResource('auth').addResource('token')
         const verifyResource = tokenResource.addResource('verify');
-        verifyResource.addMethod('GET', new LambdaIntegration(authFunction), {
-          authorizer,
-          authorizationType: AuthorizationType.CUSTOM
-        });
+        verifyResource.addMethod('GET', new LambdaIntegration(authFunction));
     
         const refreshResource = tokenResource.addResource('refresh');
-        refreshResource.addMethod('GET', new LambdaIntegration(authFunction), {
-          authorizer,
-          authorizationType: AuthorizationType.CUSTOM
-        });
+        refreshResource.addMethod('POST', new LambdaIntegration(authFunction));
 
         const configFile = 'auth.json';
         const randomTag = `random-${Math.random().toString(36).substr(2, 5)}`;

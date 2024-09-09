@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import { refreshAccessToken, isTokenExpired, logout } from './authing';
-import { Constant } from 'common/constants';
+import { API_URL, OIDC_REDIRECT_URL, TOKEN } from 'common/constants';
+// import { Constant } from 'common/constants';
 
 const apiClient = axios.create({
   baseURL: '',
@@ -9,7 +10,7 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   async (config: any) => {
-    config.baseURL = localStorage.getItem(Constant.API_URL);
+    config.baseURL = localStorage.getItem(API_URL);
     config.headers['Content-Type'] = 'application/json';
     // config.headers['Access-Control-Allow-Origin'] = '*';
     // config.withCredentials = true;
@@ -18,7 +19,7 @@ apiClient.interceptors.request.use(
       config.headers['Authorization'] = `Auth-api-key`;
       return config;
     }
-    let token = localStorage.getItem(Constant.TOKEN);
+    let token = localStorage.getItem(TOKEN);
     if(token){
       const accessToken = JSON.parse(token).access_token
       if (accessToken){
@@ -33,7 +34,7 @@ apiClient.interceptors.request.use(
         } else {
           // config.headers['Access-Control-Allow-Origin'] = ['*'];
           config.headers['Authorization'] = `Bearer ${accessToken}`;
-          config.headers['OidcIssuer'] = localStorage.getItem(Constant.OIDC_REDIRECT_URL);
+          config.headers['OidcIssuer'] = localStorage.getItem(OIDC_REDIRECT_URL);
 
         }
       }

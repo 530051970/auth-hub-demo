@@ -1,5 +1,5 @@
 import { Button, SpaceBetween, Textarea } from '@cloudscape-design/components';
-import { Constant } from 'common/constants';
+import { TOKEN } from 'common/constants';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { logout, changePassword, refreshAccessToken } from 'request/authing';
@@ -11,8 +11,9 @@ const Home: React.FC = () => {
   const [accessToken, setAccessToken] = useState("" as string)
   // const [refreshToken, setRefreshToken] = useState("" as string)
 
-  const refresh=()=>{
-    refreshAccessToken();
+  const refresh= async()=>{
+    const res = await refreshAccessToken();
+    setAccessToken(res)
     // apiClient.get("/auth/token/refresh")   
   }
 
@@ -25,7 +26,7 @@ const Home: React.FC = () => {
   }
 
   useEffect(()=>{
-    const token = localStorage.getItem(Constant.TOKEN) || ""
+    const token = localStorage.getItem(TOKEN) || ""
     let tokenDetail;
     try {
       tokenDetail = JSON.parse(token);
@@ -39,7 +40,7 @@ const Home: React.FC = () => {
       // setRefreshToken(tokenDetail.refresh_token);
     }
     if(!apiClient) return
-    apiClient.get("/biz/summary")
+    // apiClient.get("/biz/summary")
   },[])
   return (
     <div style={{ height:'90%',marginTop:'10%',width:'70%',marginLeft:'10%'}}>
@@ -58,8 +59,8 @@ const Home: React.FC = () => {
     <SpaceBetween direction='vertical' size='s'>
     <div>You can:</div> 
     <SpaceBetween direction='horizontal' size='m'>
-       <Button disabled>Refresh Token</Button>
-       <Button disabled>Change Password</Button>
+       <Button onClick={()=>refresh()}>Refresh Token</Button>
+       <Button onClick={()=>changePWD()}>Change Password</Button>
        <Button onClick={()=>logoutSys()}>Logout</Button>
     </SpaceBetween>
     </SpaceBetween>

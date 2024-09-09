@@ -1,24 +1,20 @@
 import { AuthFlowType, CognitoIdentityProviderClient, InitiateAuthCommand, NotAuthorizedException, UserNotFoundException } from '@aws-sdk/client-cognito-identity-provider';
-import { Button, Checkbox, Flashbar, Grid, Link, SpaceBetween, Spinner, Tabs } from '@cloudscape-design/components';
-import banner from 'banner.png';
+import { Alert, Button, Checkbox, Grid, Link, SpaceBetween, Spinner, Tabs } from '@cloudscape-design/components';
 import { LOGIN_TYPE } from 'enum/common_types';
-import { FC, useContext, useEffect, useState } from 'react';
-import { redirect, useNavigate } from 'react-router-dom';
-import { RouterEnum } from 'routers/routerEnum';
+import { FC, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import yaml from 'yaml';
 import OIDC from './component/oidc';
 import SNS from './component/sns';
 import User from './component/user';
 import './style.scss';
-// import ConfigContext from 'context/config-context';
 import axios, { AxiosError } from 'axios';
-import { Constant } from 'common/constants';
-import { constant } from 'lodash';
 import apiClient from 'request/client';
-// import { authConfig } from 'context/authConfig';
+import { OIDC_STORAGE, ROUTES, TOKEN, USER } from 'common/constants';
 
 const Login: FC = () => {
   const [activeTabId, setActiveTabId] = useState(LOGIN_TYPE.OIDC);
+  const [logging, setLogging] = useState(false as boolean);
   const [username, setUsername] = useState(null as any);
   const [password, setPassword] = useState(null as any);
   const [keep, setKeep] = useState(false);
@@ -35,8 +31,6 @@ const Login: FC = () => {
   const [version, setVersion] = useState(0)
   const [loginParams, setLoginParams] = useState(null as any);
   const [isLoading, setIsloading] = useState(true)
-  // const authConfig = useAuthConfig()
-  // const configContext = useContext(ConfigContext);
 
   useEffect(()=>{
     const loadConfig = async ()=> {
@@ -48,6 +42,7 @@ const Login: FC = () => {
       setConfig(configData)
       setIsloading(false)
     })
+    setError("")
   },[])
 
   useEffect(()=>{
@@ -124,7 +119,7 @@ const Login: FC = () => {
   },[config, selectedProvider, username, password])
    
   const forgetPwd =()=>{
-    navigate(RouterEnum.FindPWD.path)
+    navigate(ROUTES.FindPWD)
   }
 
   const handleMouseEnter =(target: string)=>{
@@ -136,29 +131,31 @@ const Login: FC = () => {
   }
 
   const toRegister =()=>{
-    navigate(RouterEnum.Register.path)
+    navigate(ROUTES.Register)
   }
 
   const loginSystem = () => {
     const ver = version
-    // console.log("selectedProvider is:"+selectedProvider.value)
+    setLogging(true)
     if(activeTabId === LOGIN_TYPE.OIDC && selectedProvider == null){
       setError("provideId is required")
       setVersion(ver + 1)
-      return false;
+      setLogging(false)
+      return;
     }
-    if(username == null){
+    if(username == null || username == ''){
       setError("username is required")
       setVersion(ver + 1)
-      return false;
+      setLogging(false)
+      return;
     }
-    if(password == null){
+    if(password == null || password == ''){
       setError("password is required")
       setVersion(ver + 1)
-      return false;
+      setLogging(false)
+      return;
     }
 
-    // const loginParam = loginParams.get(selectedProvider)
     switch(selectedProvider.value){
       case "Cognito":
         cognitoLogin();
@@ -167,37 +164,12 @@ const Login: FC = () => {
         oidcLogin()
         break;
     }
-    // configContext?.login({
-    //   access_token: "",
-    //   provider: {},
-    //   user: {}
-    // })
-    // navigate(RouterEnum.Home.path)
   }
-  
-  // const input = { // InitiateAuthRequest
-  //   AuthFlow: "USER_SRP_AUTH" || "REFRESH_TOKEN_AUTH" || "REFRESH_TOKEN" || "CUSTOM_AUTH" || "ADMIN_NO_SRP_AUTH" || "USER_PASSWORD_AUTH" || "ADMIN_USER_PASSWORD_AUTH", // required
-  //   AuthParameters: { // AuthParametersType
-  //     "<keys>": "STRING_VALUE",
-  //   },
-  //   ClientMetadata: { // ClientMetadataType
-  //     "<keys>": "STRING_VALUE",
-  //   },
-  //   ClientId: "STRING_VALUE", // required
-  //   AnalyticsMetadata: { // AnalyticsMetadataType
-  //     AnalyticsEndpointId: "STRING_VALUE",
-  //   },
-  //   UserContextData: { // UserContextDataType
-  //     IpAddress: "STRING_VALUE",
-  //     EncodedData: "STRING_VALUE",
-  //   },
-  // };
-
   const cognitoLogin = async()=>{
   try {
     const authResponse = await initiateAuth(selectedProvider.clientId, selectedProvider.region, username, password);
       if(authResponse.ChallengeName==="NEW_PASSWORD_REQUIRED"){
-        navigate(RouterEnum.ChangePWD.path, { 
+        navigate(ROUTES.ChangePWD, { 
           state: {
             session: authResponse.Session,
             reason:"First Login",
@@ -219,24 +191,21 @@ const Login: FC = () => {
       localStorage.setItem("accessToken", authResponse.AuthenticationResult.AccessToken || '');
       localStorage.setItem("refreshToken", authResponse.AuthenticationResult.RefreshToken || '');
       localStorage.setItem("session", authResponse.Session || '');
-      navigate(RouterEnum.Home.path)
-      // return authResponse.AuthenticationResult;
+      navigate(ROUTES.Home)
     }
-    // navigate(RouterEnum.Home.path)
   } catch (error) {
     if(error instanceof UserNotFoundException || error instanceof NotAuthorizedException) {
       setError(error.message)
     } else {
       setError("Unknown error, please contact the administrator.")
     }
+    setLogging(false)
+    return
   }
 }
 
 const oidcLogin = async()=>{
-  let tokenInfo: any
   let response: any
-  console.log("==================")
-  console.log(selectedProvider)
   try{
     response = await apiClient.post('/login', {
       redirect_uri: selectedProvider.redirectUri,
@@ -245,36 +214,22 @@ const oidcLogin = async()=>{
       username,
       password
     })
-
-    console.log("##############")
-    console.log(response)
-    // tokenInfo = await axios.post(
-    //   `${selectedProvider.redirectUri}/oidc/token`,
-    //   {
-    //     grant_type: 'password',
-    //     client_id: selectedProvider.clientId,
-    //     client_secret: selectedProvider.clientSecret,
-    //     scope: 'openid',
-    //     username,
-    //     password
-    //   },
-    //   {
-    //     headers: {
-    //       'Content-Type': 'application/x-www-form-urlencoded'
-    //     }
-    //   }
-    // );
   } catch (error){
     if(error instanceof AxiosError) {
       setError(JSON.parse(error.response?.data.detail).error_description)
     } else {
       setError("Unknown error, please contact the administrator.")
     }
+    setLogging(false)
     return
-    // setError(error.error_description)
   }
-  localStorage.setItem(Constant.PROVIDER, selectedProvider.name)
-  localStorage.setItem(Constant.CLIENT_ID, selectedProvider.client_id)
+  localStorage.setItem(OIDC_STORAGE, JSON.stringify({
+    provider: selectedProvider.label,
+    client_id: selectedProvider.clientId,
+    redirect_uri: selectedProvider.redirectUri
+  }))
+  // localStorage.setItem(PROVIDER, selectedProvider.label)
+  // localStorage.setItem(CLIENT_ID, selectedProvider.clientId)
   console.log(response.data.body.access_token)
   const userInfo: any = await axios.get(
     `${selectedProvider.redirectUri}/oidc/me`,
@@ -284,11 +239,9 @@ const oidcLogin = async()=>{
       }
     }
   );
-  localStorage.setItem(Constant.OIDC_REDIRECT_URL, selectedProvider.redirectUri);
-  localStorage.setItem(Constant.TOKEN, JSON.stringify(response.data.body));
-  localStorage.setItem(Constant.USER, JSON.stringify(userInfo.data));
-  // localStorage.setItem(Constant.USER, JSON.stringify(userInfo.data));
-  navigate(RouterEnum.Home.path)
+  localStorage.setItem(TOKEN, JSON.stringify(response.data.body));
+  localStorage.setItem(USER, JSON.stringify(userInfo.data));
+  navigate(ROUTES.Home)
 }
 
   if(isLoading){
@@ -299,11 +252,9 @@ const oidcLogin = async()=>{
   
   return (
     <div className="login-div">
-      {/* {error!=null && <div className='error'>{error}</div>} */}      
+      <SpaceBetween direction='vertical' size='m'>  
       <div className='container'>
-        {/* <div style={{padding:15}}> */}
         <div className='banner'>{projectName}</div>
-        {/* <img src={banner} alt='banner' className='banner'/> */}
         <div className='sub-title'>Supported by {author}</div>
         <div className='tab' style={{paddingLeft:'10%'}}>
         <Tabs
@@ -329,13 +280,17 @@ const oidcLogin = async()=>{
       </div>
       <div style={{textAlign:"right"}}>
       <Link onFollow={forgetPwd} >
-      Forgot Password
+      ForgotPassword
+    </Link>
+    &nbsp;&nbsp;&nbsp;
+    <Link onFollow={toRegister} >
+      Register
     </Link>
       </div>
     </Grid>
     </div>
     <div className='bottom-button'>
-    <Button variant="primary" className='login-buttom' onClick={loginSystem}>Log in</Button>
+    <Button variant="primary" className='login-buttom' loading={logging} onClick={loginSystem}>Log in</Button>
     </div>
     <div style={{display:'none'}}>{selectedProviderName}</div>
     <div style={{color: 'rgb(128, 128, 128)', fontSize: 14,marginTop: 30, width:'90%'}}>
@@ -348,31 +303,43 @@ const oidcLogin = async()=>{
           })}
         </SpaceBetween>
         <div style={{paddingTop:15, textAlign:'right'}}>
-          <span style={{color: 'rgb(128, 128, 128)'}}>Don't have an account? </span>
-          <Link onFollow={toRegister}>Register</Link>
+          <span style={{color: 'rgb(128, 128, 128)'}}>You can also&nbsp;&nbsp;</span>
+          <Link onFollow={toRegister}>Login with Amazon</Link>
         </div>
       </Grid>):(<Grid gridDefinition={[{colspan:12}]}>
         <div style={{paddingTop:5, textAlign:'center'}}>
-          <span style={{color: 'rgb(128, 128, 128)'}}>Don't have an account? </span>
-          <Link onFollow={toRegister}>Register</Link>
+          <span style={{color: 'rgb(128, 128, 128)'}}>You can also&nbsp;&nbsp;</span>
+          <Link onFollow={toRegister}>Login with Amazon</Link>
         </div>
         <div style={{display:"none"}}>{version}</div>
       </Grid>)}
-      <div style={{marginTop:10,textAlign:'right',color:'red',fontWeight:800,height:16}}>{error}</div>
+      
+      
     </div>
     
     </div>
     
-      
-    {/* </div> */}
-      {/* {(error!==null&&error!=='')?(
-        <div style={{color:"white",height:40,backgroundColor:"#d9151561",borderBottomLeftRadius: 8,borderBottomRightRadius: 8,marginTop:15}}><Icon name="status-negative" />{error}</div>
-      ):(
-        <div style={{height:40,borderBottomLeftRadius: 8,borderBottomRightRadius: 8,marginTop:15}} ></div>
-      )} */}
-      
       </div>
-    {/* <Flashbar items={items} /> */}
+      {/* <div style={{textAlign:'right',fontWeight:800,height:16}}>
+      
+        <Alert
+        statusIconAriaLabel="Info"
+      >
+        All login type use "demo" as both the username and password.
+      </Alert>
+      
+      </div> */}
+      <div style={{marginTop:30,textAlign:'right',fontWeight:800,height:16}}>
+      {(error!==""&& error!==null)&&(
+        <Alert
+        statusIconAriaLabel="Error"
+        type="error"
+      >
+        {error}
+      </Alert>
+      )}
+      </div>
+      </SpaceBetween> 
     </div>
   );
 };

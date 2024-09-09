@@ -1,11 +1,9 @@
 import { Button, Checkbox, FormField, Grid, Input, Link, Select, SpaceBetween } from '@cloudscape-design/components';
-import banner from 'banner.png';
-// import * as fs from 'fs';
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RouterEnum } from 'routers/routerEnum';
 import yaml from 'yaml';
 import './style.scss';
+import { ROUTES } from 'common/constants';
 
 const FindPWD: FC = () => {
   const navigate = useNavigate();
@@ -79,11 +77,11 @@ const FindPWD: FC = () => {
     
   }
   const toLogin =()=>{
-    navigate(RouterEnum.Login.path)
+    navigate(ROUTES.Login)
   }
 
   const toRegister =()=>{
-    navigate(RouterEnum.Register.path)
+    navigate(ROUTES.Register)
   }
 
   const handleMouseEnter =(target: string)=>{
@@ -97,7 +95,6 @@ const FindPWD: FC = () => {
   return (
     <div className="pwd-div">
       <div className='container'>
-        {/* <img src={banner} alt='banner' className='banner'/> */}
         <div className='banner'>{projectName}</div>
         <div className='sub-title'>Supported by {author}</div>
         <div className='tab' style={{paddingLeft:'10%'}}>

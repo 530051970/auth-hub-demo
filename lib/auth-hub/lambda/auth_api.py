@@ -98,7 +98,7 @@ async def verify_token_main(request: Request, vRequest: VerifyRequest):
     else:
         raise HTTPException(status_code=response.status_code, detail=response.text)
 
-@authApp.get("/token/refresh")
+@authApp.post("/auth/token/refresh")
 async def verify_token_main(request: RefreshRequest):
     client_config = __get_client_config(request.provider, request.client_id)
     
@@ -110,8 +110,9 @@ async def verify_token_main(request: RefreshRequest):
     }
 
     authing_login_url = f"{request.redirect_uri}/api/v2/oauth/token"
-    
-    response = requests.post(authing_login_url, json=payload)
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    response = requests.post(authing_login_url, data=payload, headers=headers)
+    # response = requests.post(authing_login_url, json=payload)
     if response.status_code == 200:
         return response.json()
     else:

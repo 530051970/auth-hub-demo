@@ -4,9 +4,9 @@ import banner from 'banner.png';
 import { ChallengeNameType, CognitoIdentityProviderClient, RespondToAuthChallengeCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { FC, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { RouterEnum } from 'routers/routerEnum';
 import yaml from 'yaml';
 import './style.scss';
+import { ROUTES } from 'common/constants';
 
 const ChangePWD: FC = () => {
   const location = useLocation();
@@ -134,11 +134,11 @@ const ChangePWD: FC = () => {
     
   // }
   const toLogin =()=>{
-    navigate(RouterEnum.Login.path)
+    navigate(ROUTES.Login)
   }
 
   const toRegister =()=>{
-    navigate(RouterEnum.Register.path)
+    navigate(ROUTES.Register)
   }
 
   const handleMouseEnter =(target: string)=>{

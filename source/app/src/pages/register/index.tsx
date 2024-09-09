@@ -3,9 +3,9 @@ import banner from 'banner.png';
 // import * as fs from 'fs';
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RouterEnum } from 'routers/routerEnum';
 import yaml from 'yaml';
 import './style.scss';
+import { ROUTES } from 'common/constants';
 
 const Register: FC = () => {
   const navigate = useNavigate();
@@ -71,7 +71,7 @@ const Register: FC = () => {
   })
    
   const toLogin =()=>{
-    navigate(RouterEnum.Login.path)
+    navigate(ROUTES.Login)
   }
 
   const handleMouseEnter =(target: string)=>{
