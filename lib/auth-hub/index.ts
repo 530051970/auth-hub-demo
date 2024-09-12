@@ -19,6 +19,7 @@ import { Function, Code, Runtime, LayerVersion, Alias } from 'aws-cdk-lib/aws-la
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
+import { AWSError, CognitoIdentityServiceProvider } from 'aws-sdk';
 import { Construct } from 'constructs';
 import path = require('path');
 
@@ -29,6 +30,7 @@ export interface AuthHubProps {
   readonly region: string;
   readonly url: string;
   }
+
   /**
    * Construct to integrate auth assets
    */
@@ -56,7 +58,7 @@ export interface AuthHubProps {
 
         // Conditionally create the Cognito resources if the parameter is true
         // if (createCognito) {
-        const userPool = new UserPool(scope, 'userPool', {
+        const userPool = new UserPool(scope, `${new Date().toISOString()}UserPool`, {
             selfSignUpEnabled: true,
             signInAliases: { username: true },
             autoVerify: { email: false }, 
@@ -79,23 +81,21 @@ export interface AuthHubProps {
           const userPoolResource = userPool.node.defaultChild as CfnUserPool;
         
           userPoolResource.cfnOptions.condition = enableCognito
-
-        const defaultUser = new CfnUserPoolUser(this, 'defaultUser', {
-          userPoolId: userPool.userPoolId,
-          username: 'demo', // 默认用户名
-          userAttributes: [
-            { name: 'email', value: 'dummy@amazon.com' }, // 默认 email
-          ],
-        });
-        defaultUser.cfnOptions.condition = enableCognito
-        // Create a Cognito App Client
-        // const userPoolClient = new UserPoolClient(this, `userPoolClient`, {
-        //   userPool:userPool,
-        //   generateSecret: false,
-        // });
+          // const username = 'demo'
+        // userExists(username, userPool.userPoolId, props.region).then(exists => {
+        //   if (!exists) {
+            // const defaultUser = new CfnUserPoolUser(this, 'defaultUser', {
+            //   userPoolId: userPool.userPoolId,
+            //   username: username, 
+            //   userAttributes: [
+            //     { name: 'email', value: 'dummy@amazon.com' }, 
+            //   ],
+            // });
+            // defaultUser.cfnOptions.condition = enableCognito
+          //  }
         const userPoolClient = new UserPoolClient(this, 'OidcUserPoolClient', {
           userPool,
-          generateSecret: true, // 生成 client_secret (OIDC)
+          generateSecret: true,
           authFlows: {
             userPassword: true,
             adminUserPassword: true,
@@ -106,7 +106,7 @@ export interface AuthHubProps {
               authorizationCodeGrant: true
             },
             scopes: [
-              OAuthScope.OPENID, // 必须包含 openid 范围
+              OAuthScope.OPENID, 
               OAuthScope.EMAIL,
               OAuthScope.PROFILE,
             ],
@@ -123,22 +123,6 @@ export interface AuthHubProps {
         });
 
         (userPoolClient.node.defaultChild as CfnUserPool).cfnOptions.condition = enableCognito
-        
-        const userGroup = new CfnUserPoolUserToGroupAttachment(this, 'MyUserPassword', {
-          userPoolId: userPool.userPoolId,
-          username: 'demo',
-          groupName: 'defaultGroup',
-        });
-
-        userGroup.cfnOptions.condition = enableCognito
-
-        const setPassword = new CfnUserPoolUser(this, 'SetPassword', {
-          userPoolId: userPool.userPoolId,
-          username: 'demo',
-          desiredDeliveryMediums: ['EMAIL'],
-          forceAliasCreation: false,
-        });
-        setPassword.cfnOptions.condition = enableCognito
 
         const setPasswordPolicy = new CfnUserPoolUser(this, 'SetUserPassword', {
           userPoolId: userPool.userPoolId,
@@ -146,12 +130,10 @@ export interface AuthHubProps {
           messageAction: 'SUPPRESS',
           userAttributes: [
             { name: 'password', value: '123456' },
+            { name: 'email', value: 'dummy@amazon.com' }
           ],
         });
         setPasswordPolicy.cfnOptions.condition = enableCognito
-
-        // }
-        
         const authLayer = new LayerVersion(
           this,
           "APILambdaAuthLayer",
