@@ -120,6 +120,8 @@ export class AuthHubDemoStack extends Stack {
       url: distribution.distributionDomainName
     });
 
+    authHub.node.addDependency(distribution)
+
     const resource = authHub.apigw.root.addResource('biz').addResource('summary');
     resource.addMethod('GET', new LambdaIntegration(bizFunction), {
       authorizer: bizAuthorizer,
@@ -133,7 +135,7 @@ export class AuthHubDemoStack extends Stack {
 
   private genWebAssets(){
     const sourceDir = path.join(__dirname, '../source/app');
-    execSync(`cd ${sourceDir} && rm -rf build && npm ci && npm run build`, { stdio: 'inherit' });
+    execSync(`cd ${sourceDir} && rm -rf build && npm i && npm ci && npm run build`, { stdio: 'inherit' });
     return Source.asset(`${sourceDir}/build`)
   }
 

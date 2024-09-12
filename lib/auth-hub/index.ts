@@ -43,6 +43,7 @@ export interface AuthHubProps {
         super(scope, id);
         const {solutionName, stage} = props;
         // const region = props.region
+        const randomTag = `random-${Math.random().toString(36).substr(2, 5)}`;
 
         // Define a CfnParameter to accept a boolean (string) parameter from the command line
         const cognitoParameter = new CfnParameter(scope, 'cognito', {
@@ -110,30 +111,70 @@ export interface AuthHubProps {
               OAuthScope.EMAIL,
               OAuthScope.PROFILE,
             ],
-            callbackUrls: [`${props.url}/callback`], 
-            logoutUrls: [`${props.url}logout`],
+            callbackUrls: [`https://${props.url}/callback`], 
+            logoutUrls: [`https://${props.url}/logout`],
           },
         });
 
         const userPoolDomain = new UserPoolDomain(this, 'OidcUserPoolDomain', {
           userPool,
           cognitoDomain: {
-            domainPrefix: 'cognito-authing', // 自定义域名前缀
+            domainPrefix: 'demo-authing', 
           },
         });
 
         (userPoolClient.node.defaultChild as CfnUserPool).cfnOptions.condition = enableCognito
 
-        const setPasswordPolicy = new CfnUserPoolUser(this, 'SetUserPassword', {
+        const username= 'demo'
+        const defaultUser = new CfnUserPoolUser(this, `${randomTag}-UserPoolUser`, {
           userPoolId: userPool.userPoolId,
-          username: 'demo',
+          username,
           messageAction: 'SUPPRESS',
           userAttributes: [
-            { name: 'password', value: '123456' },
+            // { name: 'password', value: '123456' },
             { name: 'email', value: 'dummy@amazon.com' }
           ],
         });
-        setPasswordPolicy.cfnOptions.condition = enableCognito
+        defaultUser.cfnOptions.condition = enableCognito
+        
+        const passwordParams = {
+          UserPoolId: userPool.userPoolId,
+          Username: username,
+          Permanent: true,
+          Password: '123456',
+        };
+    
+        const demoUserPassword = new AwsCustomResource(this, 'demoUserPassword', {
+          onCreate: {
+            service: 'CognitoIdentityServiceProvider',
+            action: 'adminSetUserPassword',
+            parameters: passwordParams,
+            physicalResourceId: PhysicalResourceId.of(`demoUserPasswordCreate-${randomTag}`),
+          },
+          onUpdate: {
+            service: 'CognitoIdentityServiceProvider',
+            action: 'adminSetUserPassword',
+            parameters: passwordParams,
+            physicalResourceId: PhysicalResourceId.of(`demoUserPasswordUpdate-${randomTag}`),
+          },
+          policy: AwsCustomResourcePolicy.fromSdkCalls({ resources: AwsCustomResourcePolicy.ANY_RESOURCE }),
+          installLatestAwsSdk: false,
+        });
+    
+        //attaches user to cognito group which corresponds to the domain name (team1, team2...)
+        // const demoUserGroup = new CfnUserPoolUserToGroupAttachment(this, 'attachUserToGroup', {
+        //   userPoolId: props.userPoolId,
+        //   groupName: props.groupName,
+        //   username: props.userName,
+        // });
+    
+        // demoUserGroup.node.addDependency(demoUser);
+        demoUserPassword.node.addDependency(defaultUser);
+
+
+
+
+
         const authLayer = new LayerVersion(
           this,
           "APILambdaAuthLayer",
@@ -229,7 +270,7 @@ export interface AuthHubProps {
         refreshResource.addMethod('POST', new LambdaIntegration(authFunction));
 
         const configFile = 'auth.json';
-        const randomTag = `random-${Math.random().toString(36).substr(2, 5)}`;
+        
         const configLambda = new AwsCustomResource(this, 'WebConfig', {
           logRetention: RetentionDays.ONE_DAY,
           onUpdate: {
