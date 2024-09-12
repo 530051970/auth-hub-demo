@@ -27,7 +27,7 @@ export const refreshAccessToken = async () => {
     redirect_uri: oidc.redirect_uri
   });
 
-  const { access_token } = response.data.access_token;
+  const { access_token } = response.data;
   localStorage.setItem(TOKEN, JSON.stringify(response.data))
   return access_token;
 };

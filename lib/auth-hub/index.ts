@@ -135,11 +135,6 @@ export interface AuthHubProps {
         });
     
         demoUserPassword.node.addDependency(defaultUser);
-
-
-
-
-
         const authLayer = new LayerVersion(
           this,
           "APILambdaAuthLayer",
