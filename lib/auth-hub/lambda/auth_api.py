@@ -43,11 +43,11 @@ authApp.add_middleware(
     allow_headers=["*"],  # 允许所有头
 )
 
-@authApp.get("/token")
+@authApp.get("/auth")
 async def root():
     return {"message": "Welcome to Auth API!"}
 
-@authApp.post("/login")
+@authApp.post("/auth/login")
 async def login(request: LoginRequest):
     client_config = __get_client_config(request.provider, request.client_id)
     payload = {

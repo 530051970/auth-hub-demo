@@ -207,7 +207,7 @@ const Login: FC = () => {
 const oidcLogin = async()=>{
   let response: any
   try{
-    response = await apiClient.post('/login', {
+    response = await apiClient.post('/auth/login', {
       redirect_uri: selectedProvider.redirectUri,
       client_id: selectedProvider.clientId,
       provider: selectedProvider.label.toLowerCase(),

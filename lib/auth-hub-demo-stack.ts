@@ -59,7 +59,8 @@ export class AuthHubDemoStack extends Stack {
           responseHttpStatus:200,
           httpStatus:403
         }
-      ]
+      ],
+      
     });
 
     new BucketDeployment(this, 'portal_deploy', {

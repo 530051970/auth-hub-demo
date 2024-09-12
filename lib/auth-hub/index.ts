@@ -53,12 +53,7 @@ export interface AuthHubProps {
           description: 'Whether to create Cognito User Pool or not',
         });
 
-        // Convert the string value to a boolean
         const enableCognito = new CfnCondition(this, 'NoPrivateSubnet', { expression: Fn.conditionEquals(cognitoParameter, 'true')});
-        // const createCognito = createCognitoParam.valueAsString === 'true';
-
-        // Conditionally create the Cognito resources if the parameter is true
-        // if (createCognito) {
         const userPool = new UserPool(scope, `${new Date().toISOString()}UserPool`, {
             selfSignUpEnabled: true,
             signInAliases: { username: true },
@@ -71,29 +66,8 @@ export interface AuthHubProps {
                     minLength: 6,
             },
           });
-        
-
-          // const privateCfnSubnet = new CfnSubnet(this, 'PrivateSubnet', {
-          //   vpcId: vpc.vpcId,
-          //   availabilityZone: vpc.availabilityZones[0],
-          //   cidrBlock: cidrBlock, // Adjust the CIDR block based on your requirements
-          //   mapPublicIpOnLaunch: false,
-          // });
-          const userPoolResource = userPool.node.defaultChild as CfnUserPool;
-        
-          userPoolResource.cfnOptions.condition = enableCognito
-          // const username = 'demo'
-        // userExists(username, userPool.userPoolId, props.region).then(exists => {
-        //   if (!exists) {
-            // const defaultUser = new CfnUserPoolUser(this, 'defaultUser', {
-            //   userPoolId: userPool.userPoolId,
-            //   username: username, 
-            //   userAttributes: [
-            //     { name: 'email', value: 'dummy@amazon.com' }, 
-            //   ],
-            // });
-            // defaultUser.cfnOptions.condition = enableCognito
-          //  }
+        const userPoolResource = userPool.node.defaultChild as CfnUserPool;
+        userPoolResource.cfnOptions.condition = enableCognito
         const userPoolClient = new UserPoolClient(this, 'OidcUserPoolClient', {
           userPool,
           generateSecret: true,
@@ -119,7 +93,7 @@ export interface AuthHubProps {
         const userPoolDomain = new UserPoolDomain(this, 'OidcUserPoolDomain', {
           userPool,
           cognitoDomain: {
-            domainPrefix: 'demo-authing', 
+            domainPrefix: `demo-authing${randomTag}`, 
           },
         });
 
@@ -131,7 +105,6 @@ export interface AuthHubProps {
           username,
           messageAction: 'SUPPRESS',
           userAttributes: [
-            // { name: 'password', value: '123456' },
             { name: 'email', value: 'dummy@amazon.com' }
           ],
         });
@@ -161,14 +134,6 @@ export interface AuthHubProps {
           installLatestAwsSdk: false,
         });
     
-        //attaches user to cognito group which corresponds to the domain name (team1, team2...)
-        // const demoUserGroup = new CfnUserPoolUserToGroupAttachment(this, 'attachUserToGroup', {
-        //   userPoolId: props.userPoolId,
-        //   groupName: props.groupName,
-        //   username: props.userName,
-        // });
-    
-        // demoUserGroup.node.addDependency(demoUser);
         demoUserPassword.node.addDependency(defaultUser);
 
 
@@ -256,18 +221,15 @@ export interface AuthHubProps {
         new CfnOutput(this, 'UserPoolDomain', {
           value: `https://${userPoolDomain.domainName}.auth.${props.region}.amazoncognito.com`,
         });
-    
-        // const authorizer = new TokenAuthorizer(this, `${solutionName}AuthAuthorizer`, {
-        //   handler: authAuthorizerFunction
-        // });
-        const loginResource = this.apigw.root.addResource('login')
-        loginResource.addMethod('POST', new LambdaIntegration(authFunction));
-        const tokenResource = this.apigw.root.addResource('auth').addResource('token')
+        const authIntegration = new LambdaIntegration(authFunction)
+        const authResource = this.apigw.root.addResource('auth')
+        const loginResource = authResource.addResource('login')
+        loginResource.addMethod('POST', authIntegration);
+        const tokenResource = authResource.addResource('token')
         const verifyResource = tokenResource.addResource('verify');
-        verifyResource.addMethod('GET', new LambdaIntegration(authFunction));
-    
+        verifyResource.addMethod('GET', authIntegration);
         const refreshResource = tokenResource.addResource('refresh');
-        refreshResource.addMethod('POST', new LambdaIntegration(authFunction));
+        refreshResource.addMethod('POST', authIntegration);
 
         const configFile = 'auth.json';
         
@@ -277,7 +239,7 @@ export interface AuthHubProps {
             action: 'putObject',
             parameters: {
               Body: JSON.stringify({
-                auth_url: this.apigw.url
+                api_url: this.apigw.url
               }),
               Bucket: props.portalBucket.bucketName,
               CacheControl: 'max-age=0, no-cache, no-store, must-revalidate',
