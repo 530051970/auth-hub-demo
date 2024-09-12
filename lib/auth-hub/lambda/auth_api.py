@@ -109,7 +109,7 @@ async def verify_token_main(request: RefreshRequest):
         "refresh_token": request.refresh_token
     }
 
-    authing_login_url = f"{request.redirect_uri}/api/v2/oauth/token"
+    authing_login_url = f"{request.redirect_uri}/oidc/token"
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     response = requests.post(authing_login_url, data=payload, headers=headers)
     # response = requests.post(authing_login_url, json=payload)
