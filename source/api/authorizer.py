@@ -3,7 +3,7 @@ from requests import Response
 
 def handler(event, context):
     authorization_token = event['headers'].get('Authorization', '')
-    oidc_issue_token = event['headers'].get('OIDC-Issue', '')
+    oidc_issue_token = event['headers'].get('OIDC-Issuer', '')
     token = authorization_token.split()[1]  # Bearer token
     validate_access_token_url = f"{oidc_issue_token}/api/v2/oidc/validate_token?access_token={token}"
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}

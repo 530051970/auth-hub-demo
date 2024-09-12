@@ -30,8 +30,8 @@ const SNS = (props: SNSProps) => {
       value={password}
       placeholder="Please input sns code"
     />
-        </div><div className='item'>
-          <div style={{height:"calc(100% - 18px)", width:"100%" ,border:"1px solid rgba(128, 128, 128, 0.3803921569)" ,display:'flex', alignItems:'center',justifyContent:'center'}}>
+        </div><div className='item' style={{height:'100%'}}>
+          <div style={{height:"calc(100% - 18px)", width:"100%" ,border:"1px solid rgba(128, 128, 128, 0.3803921569)" ,display:'flex', alignItems:'center',justifyContent:'center',borderRadius:5, background:'rgba(128, 128, 128, 0.38)'}}>
           GET SNS CODE
           </div>
         

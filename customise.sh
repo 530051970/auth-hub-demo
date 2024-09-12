@@ -21,5 +21,8 @@ sed -i '' "s/AuthHubDemoStack/${ASSET_STACK_NAME}/g" bin/main.ts
 sed -i '' "s/AuthHubDemoStack/${ASSET_STACK_NAME}/g" lib/auth-hub-demo-stack.ts
 mv lib/auth-hub-demo-stack.ts lib/${ASSET_PACKAGE_NAME}.ts
 
+sed -i '' "s/auth-hub-demo/${ASSET_PACKAGE_NAME}/g" lib/constant.ts
+sed -i '' "s/Authkit/${ASSET_STACK_NAME}/g" lib/constant.ts
+
 
 

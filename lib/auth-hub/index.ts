@@ -11,8 +11,9 @@
  *  and limitations under the License.
  */
 
-import { Duration } from 'aws-cdk-lib';
+import { CfnCondition, CfnOutput, CfnParameter, CfnStack, Duration, Fn } from 'aws-cdk-lib';
 import { AuthorizationType, Cors, EndpointType, LambdaIntegration, MethodLoggingLevel, RestApi, TokenAuthorizer } from 'aws-cdk-lib/aws-apigateway';
+import { CfnUserPool, CfnUserPoolUser, CfnUserPoolUserToGroupAttachment, OAuthScope, UserPool, UserPoolClient, UserPoolDomain } from 'aws-cdk-lib/aws-cognito';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Function, Code, Runtime, LayerVersion, Alias } from 'aws-cdk-lib/aws-lambda';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
@@ -25,6 +26,8 @@ export interface AuthHubProps {
   readonly solutionName: string;
   readonly stage: string;
   readonly portalBucket: Bucket;
+  readonly region: string;
+  readonly url: string;
   }
   /**
    * Construct to integrate auth assets
@@ -32,9 +35,122 @@ export interface AuthHubProps {
 
   export class AuthHub extends Construct {
     public apigw: RestApi;
+    // readonly userPool: UserPool;
+    // readonly userPoolClient: UserPoolClient;
     constructor(scope: Construct, id: string, props: AuthHubProps) {
         super(scope, id);
         const {solutionName, stage} = props;
+        // const region = props.region
+
+        // Define a CfnParameter to accept a boolean (string) parameter from the command line
+        const cognitoParameter = new CfnParameter(scope, 'cognito', {
+          type: 'String', 
+          allowedValues: ['true', 'false'], // Accepts true/false as valid values
+          default: 'true', // Default to true if not provided
+          description: 'Whether to create Cognito User Pool or not',
+        });
+
+        // Convert the string value to a boolean
+        const enableCognito = new CfnCondition(this, 'NoPrivateSubnet', { expression: Fn.conditionEquals(cognitoParameter, 'true')});
+        // const createCognito = createCognitoParam.valueAsString === 'true';
+
+        // Conditionally create the Cognito resources if the parameter is true
+        // if (createCognito) {
+        const userPool = new UserPool(scope, 'userPool', {
+            selfSignUpEnabled: true,
+            signInAliases: { username: true },
+            autoVerify: { email: false }, 
+            passwordPolicy: {
+                    requireDigits: false,
+                    requireLowercase: false,
+                    requireSymbols: false,
+                    requireUppercase: false,
+                    minLength: 6,
+            },
+          });
+        
+
+          // const privateCfnSubnet = new CfnSubnet(this, 'PrivateSubnet', {
+          //   vpcId: vpc.vpcId,
+          //   availabilityZone: vpc.availabilityZones[0],
+          //   cidrBlock: cidrBlock, // Adjust the CIDR block based on your requirements
+          //   mapPublicIpOnLaunch: false,
+          // });
+          const userPoolResource = userPool.node.defaultChild as CfnUserPool;
+        
+          userPoolResource.cfnOptions.condition = enableCognito
+
+        const defaultUser = new CfnUserPoolUser(this, 'defaultUser', {
+          userPoolId: userPool.userPoolId,
+          username: 'demo', // 默认用户名
+          userAttributes: [
+            { name: 'email', value: 'dummy@amazon.com' }, // 默认 email
+          ],
+        });
+        defaultUser.cfnOptions.condition = enableCognito
+        // Create a Cognito App Client
+        // const userPoolClient = new UserPoolClient(this, `userPoolClient`, {
+        //   userPool:userPool,
+        //   generateSecret: false,
+        // });
+        const userPoolClient = new UserPoolClient(this, 'OidcUserPoolClient', {
+          userPool,
+          generateSecret: true, // 生成 client_secret (OIDC)
+          authFlows: {
+            userPassword: true,
+            adminUserPassword: true,
+            custom: true
+          },
+          oAuth: {
+            flows: {
+              authorizationCodeGrant: true
+            },
+            scopes: [
+              OAuthScope.OPENID, // 必须包含 openid 范围
+              OAuthScope.EMAIL,
+              OAuthScope.PROFILE,
+            ],
+            callbackUrls: [`${props.url}/callback`], 
+            logoutUrls: [`${props.url}logout`],
+          },
+        });
+
+        const userPoolDomain = new UserPoolDomain(this, 'OidcUserPoolDomain', {
+          userPool,
+          cognitoDomain: {
+            domainPrefix: 'cognito-authing', // 自定义域名前缀
+          },
+        });
+
+        (userPoolClient.node.defaultChild as CfnUserPool).cfnOptions.condition = enableCognito
+        
+        const userGroup = new CfnUserPoolUserToGroupAttachment(this, 'MyUserPassword', {
+          userPoolId: userPool.userPoolId,
+          username: 'demo',
+          groupName: 'defaultGroup',
+        });
+
+        userGroup.cfnOptions.condition = enableCognito
+
+        const setPassword = new CfnUserPoolUser(this, 'SetPassword', {
+          userPoolId: userPool.userPoolId,
+          username: 'demo',
+          desiredDeliveryMediums: ['EMAIL'],
+          forceAliasCreation: false,
+        });
+        setPassword.cfnOptions.condition = enableCognito
+
+        const setPasswordPolicy = new CfnUserPoolUser(this, 'SetUserPassword', {
+          userPoolId: userPool.userPoolId,
+          username: 'demo',
+          messageAction: 'SUPPRESS',
+          userAttributes: [
+            { name: 'password', value: '123456' },
+          ],
+        });
+        setPasswordPolicy.cfnOptions.condition = enableCognito
+
+        // }
         
         const authLayer = new LayerVersion(
           this,
@@ -62,10 +178,16 @@ export interface AuthHubProps {
           runtime: Runtime.PYTHON_3_11,
           code: Code.fromAsset('lib/auth-hub/lambda'),
           handler: 'auth_api.handler',
-          memorySize: 4096, // 
-          timeout: Duration.seconds(10), 
+          memorySize: 4096,
+          timeout: Duration.seconds(10),
+          environment: {
+            cognito_client_id: userPoolClient?.userPoolClientId,
+            user_pool_id: userPool?.userPoolId
+          }, 
           layers: [authLayer]
         });
+
+        // authFunction.node.addDependency(userPoolClient)
 
         const version = authFunction.currentVersion;
         new Alias(this, 'AuthFunctionAlias', {
@@ -73,13 +195,6 @@ export interface AuthHubProps {
             version,
             provisionedConcurrentExecutions: 2,
         });
-    
-        // const authAuthorizerFunction = new Function(this, `${solutionName}AuthAuthorizerFunction`, {
-        //   runtime: Runtime.PYTHON_3_11,
-        //   code: Code.fromAsset('lib/auth-hub/lambda'),
-        //   handler: 'authorizer.handler',
-        //   layers: [authLayer]
-        // });
     
         this.apigw = new RestApi(this, `${solutionName}AuthAPI`, {
           restApiName: `${solutionName}AuthAPI Service`,
@@ -91,7 +206,7 @@ export interface AuthHubProps {
               "Content-Type",
               "X-Amz-Date",
               "Authorization",
-              "OIDC-Issue",
+              "OIDC-Issuer",
               "X-Api-Key",
               "X-Amz-Security-Token",
             ],
@@ -105,6 +220,18 @@ export interface AuthHubProps {
             dataTraceEnabled: true,
             metricsEnabled: true
           }
+        });
+
+        new CfnOutput(this, 'UserPoolId', {
+          value: userPool.userPoolId,
+        });
+
+        new CfnOutput(this, 'UserPoolClientId', {
+          value: userPoolClient.userPoolClientId,
+        });
+
+        new CfnOutput(this, 'UserPoolDomain', {
+          value: `https://${userPoolDomain.domainName}.auth.${props.region}.amazoncognito.com`,
         });
     
         // const authorizer = new TokenAuthorizer(this, `${solutionName}AuthAuthorizer`, {

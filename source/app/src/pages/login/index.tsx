@@ -304,7 +304,7 @@ const oidcLogin = async()=>{
         </SpaceBetween>
         <div style={{paddingTop:15, textAlign:'right'}}>
           <span style={{color: 'rgb(128, 128, 128)'}}>You can also&nbsp;&nbsp;</span>
-          <Link onFollow={toRegister}>Login with Amazon</Link>
+          <Link onFollow={toRegister}>Login with Midway</Link>
         </div>
       </Grid>):(<Grid gridDefinition={[{colspan:12}]}>
         <div style={{paddingTop:5, textAlign:'center'}}>

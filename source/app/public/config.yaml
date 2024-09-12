@@ -18,9 +18,9 @@ login:
         iconUrl: "cognito"
         description: "AWS's built-in user authentication service"
         # disabled: true
-        # region: "us-east-1"
-        # clientId: "ug1oiijdio1e92rfrptd9jg75"  
-        # userPoolId: "us-east-1_PaWe18vwE"
+        region: "us-east-1"
+        clientId: "ug1oiijdio1e92rfrptd9jg75"  
+        userPoolId: "us-east-1_PaWe18vwE"
       - name: "Authing"
         iconUrl: "authing"
         description: "Authentication service for ensuring application security"

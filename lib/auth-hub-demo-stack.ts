@@ -24,8 +24,10 @@ export class AuthHubDemoStack extends Stack {
   readonly userPool?: UserPool
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    // const region = this.region
     
-    const portalBucket = new Bucket(this, `${SolutionInfo.SOLUTION_SHORT_NAME}PortalBucket`, {
+    const portalBucket = new Bucket(this, `${SolutionInfo.SOLUTION_STACK_NAME}PortalBucket`, {
       publicReadAccess: false,
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       removalPolicy: RemovalPolicy.DESTROY,
@@ -43,7 +45,7 @@ export class AuthHubDemoStack extends Stack {
       principals: [new CanonicalUserPrincipal(cloudfrontOAI.cloudFrontOriginAccessIdentityS3CanonicalUserId)]
     }));
 
-    const distribution = new Distribution(this, `${SolutionInfo.SOLUTION_SHORT_NAME}Distribution`, {
+    const distribution = new Distribution(this, `${SolutionInfo.SOLUTION_STACK_NAME}Distribution`, {
       defaultRootObject: 'index.html',
       defaultBehavior: {
         origin: new S3Origin(portalBucket, { originAccessIdentity: cloudfrontOAI }),
@@ -88,32 +90,34 @@ export class AuthHubDemoStack extends Stack {
       },
     )
 
-    const bizFunction = new Function(this, `${SolutionInfo.SOLUTION_SHORT_NAME}BizFunction`, {
+    const bizFunction = new Function(this, `${SolutionInfo.SOLUTION_STACK_NAME}BizFunction`, {
       runtime: Runtime.PYTHON_3_11,
       code: Code.fromAsset('source/api'),
       handler: 'biz_api.handler',
       layers: [bizLayer]
     });
 
-    const bizAuthorizerFunction = new Function(this, `${SolutionInfo.SOLUTION_SHORT_NAME}BizAuthorizerFunction`, {
+    const bizAuthorizerFunction = new Function(this, `${SolutionInfo.SOLUTION_STACK_NAME}BizAuthorizerFunction`, {
       runtime: Runtime.PYTHON_3_11,
       code: Code.fromAsset('source/api'),
       handler: 'authorizer.handler',
       layers: [bizLayer]
     });
 
-    const bizAuthorizer = new RequestAuthorizer(this, `${SolutionInfo.SOLUTION_SHORT_NAME}BizAuthorizer`, {
+    const bizAuthorizer = new RequestAuthorizer(this, `${SolutionInfo.SOLUTION_STACK_NAME}BizAuthorizer`, {
       handler: bizAuthorizerFunction,
       identitySources: [
         IdentitySource.header('Authorization'),
-        IdentitySource.header('OIDC-Issue')
+        IdentitySource.header('OIDC-Issuer')
       ],
     });
 
     const authHub = new AuthHub(this, 'AuthHub', {
-      solutionName: SolutionInfo.SOLUTION_SHORT_NAME,
+      solutionName: SolutionInfo.SOLUTION_STACK_NAME,
       stage:'dev',
-      portalBucket: portalBucket
+      region: this.region,
+      portalBucket: portalBucket,
+      url: distribution.distributionDomainName
     });
 
     const resource = authHub.apigw.root.addResource('biz').addResource('summary');
