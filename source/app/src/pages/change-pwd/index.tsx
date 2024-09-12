@@ -1,6 +1,4 @@
 import { Button, Flashbar, FormField, Grid, Input, Link, SpaceBetween } from '@cloudscape-design/components';
-import banner from 'banner.png';
-// import * as fs from 'fs';
 import { ChallengeNameType, CognitoIdentityProviderClient, RespondToAuthChallengeCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { FC, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';

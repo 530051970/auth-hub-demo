@@ -1,6 +1,4 @@
 import { Button, Checkbox, FormField, Grid, Input, Link, Select, SpaceBetween } from '@cloudscape-design/components';
-import banner from 'banner.png';
-// import * as fs from 'fs';
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import yaml from 'yaml';
