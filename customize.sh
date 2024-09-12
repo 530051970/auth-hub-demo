@@ -1,15 +1,14 @@
 #!/bin/bash
 
 # Check if the correct number of arguments is provided
-if [ "$#" -ne 3 ]; then
-    echo "Usage: $0 <asset_package_name> <asset_stack_name> <version>"
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <asset_package_name> <asset_stack_name>"
     exit 1
 fi
 
 # Get the passed parameters
 ASSET_PACKAGE_NAME=$1
 ASSET_STACK_NAME=$2
-VERSION=$3
 
 # Modify package name
 mv "$(pwd)" "$(dirname "$(pwd)")/$ASSET_PACKAGE_NAME"
