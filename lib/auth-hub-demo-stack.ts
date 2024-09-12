@@ -133,7 +133,7 @@ export class AuthHubDemoStack extends Stack {
 
   private genWebAssets(){
     const sourceDir = path.join(__dirname, '../source/app');
-    execSync(`cd ${sourceDir} && sudo rm -rf build && npm i && npm run build`);
+    execSync(`cd ${sourceDir} && rm -rf build && npm ci && npm run build`, { stdio: 'inherit' });
     return Source.asset(`${sourceDir}/build`)
   }
 
