@@ -23,3 +23,6 @@ mv lib/auth-hub-demo-stack.ts lib/${ASSET_PACKAGE_NAME}.ts
 
 sed -i '' "s/auth-hub-demo/${ASSET_PACKAGE_NAME}/g" lib/constant.ts
 sed -i '' "s/Authkit/${ASSET_STACK_NAME}/g" lib/constant.ts
+
+sed -i '' "s/auth-hub-demo/${ASSET_PACKAGE_NAME}/g" package.json
+sed -i '' "s/auth-hub-demo/${ASSET_PACKAGE_NAME}/g" package-lock.json
