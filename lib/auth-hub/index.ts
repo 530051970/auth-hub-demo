@@ -22,6 +22,7 @@ import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from '
 import { AWSError, CognitoIdentityServiceProvider } from 'aws-sdk';
 import { Construct } from 'constructs';
 import path = require('path');
+import { BUILTIN_COGNITO_PWD } from '../constant';
 
 export interface AuthHubProps {
   readonly solutionName: string;
@@ -37,19 +38,14 @@ export interface AuthHubProps {
 
   export class AuthHub extends Construct {
     public apigw: RestApi;
-    // readonly userPool: UserPool;
-    // readonly userPoolClient: UserPoolClient;
     constructor(scope: Construct, id: string, props: AuthHubProps) {
         super(scope, id);
         const {solutionName, stage} = props;
-        // const region = props.region
         const randomTag = `random-${Math.random().toString(36).substr(2, 5)}`;
-
-        // Define a CfnParameter to accept a boolean (string) parameter from the command line
         const cognitoParameter = new CfnParameter(scope, 'cognito', {
           type: 'String', 
-          allowedValues: ['true', 'false'], // Accepts true/false as valid values
-          default: 'true', // Default to true if not provided
+          allowedValues: ['true', 'false'], 
+          default: 'true',
           description: 'Whether to create Cognito User Pool or not',
         });
 
@@ -59,11 +55,11 @@ export interface AuthHubProps {
             signInAliases: { username: true },
             autoVerify: { email: false }, 
             passwordPolicy: {
-                    requireDigits: false,
-                    requireLowercase: false,
-                    requireSymbols: false,
-                    requireUppercase: false,
-                    minLength: 6,
+              requireDigits: false,
+              requireLowercase: false,
+              requireSymbols: false,
+              requireUppercase: false,
+              minLength: 6,
             },
           });
         const userPoolResource = userPool.node.defaultChild as CfnUserPool;
@@ -114,7 +110,7 @@ export interface AuthHubProps {
           UserPoolId: userPool.userPoolId,
           Username: username,
           Permanent: true,
-          Password: '123456',
+          Password: BUILTIN_COGNITO_PWD,
         };
     
         const demoUserPassword = new AwsCustomResource(this, 'demoUserPassword', {
@@ -165,7 +161,9 @@ export interface AuthHubProps {
           timeout: Duration.seconds(10),
           environment: {
             cognito_client_id: userPoolClient?.userPoolClientId,
-            user_pool_id: userPool?.userPoolId
+            user_pool_id: userPool?.userPoolId,
+            cognito_domain: userPoolDomain.domainName,
+            region: props.region
           }, 
           layers: [authLayer]
         });
@@ -234,7 +232,8 @@ export interface AuthHubProps {
             action: 'putObject',
             parameters: {
               Body: JSON.stringify({
-                api_url: this.apigw.url
+                api_url: this.apigw.url,
+                built_in_cognito: cognitoParameter.valueAsString
               }),
               Bucket: props.portalBucket.bucketName,
               CacheControl: 'max-age=0, no-cache, no-store, must-revalidate',

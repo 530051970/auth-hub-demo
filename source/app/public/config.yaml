@@ -14,13 +14,14 @@ login:
     label: "OIDC"
     value: "oidc"
     providers:
-      - name: "Cognito"
-        iconUrl: "cognito"
-        description: "AWS's built-in user authentication service"
-        # disabled: true
-        region: "us-east-1"
-        clientId: "ug1oiijdio1e92rfrptd9jg75"  
-        userPoolId: "us-east-1_PaWe18vwE"
+      # hint: If Cognito is configured here, the system will use the configuration information provided here.
+      # - name: "Cognito"
+      #   iconUrl: "cognito"
+      #   description: "AWS's built-in user authentication service"
+      #   region: "us-east-1"
+      #   clientId: "ug1oiijdio1e92rfrptd9jg75"  
+      #   userPoolId: "us-east-1_PaWe18vwE"
+      #   redirectUri: "https://demo-center.cognito.cn"
       - name: "Authing"
         iconUrl: "authing"
         description: "Authentication service for ensuring application security"

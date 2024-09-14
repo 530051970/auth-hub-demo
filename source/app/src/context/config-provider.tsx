@@ -3,7 +3,7 @@ import ConfigContext, { CommonInfo } from './config-context';
 import { alertMsg } from 'ts/common';
 // import { Constant } from 'common/constants';
 import { useLocation } from 'react-router-dom';
-import { API_URL } from 'common/constants';
+import { API_URL, BUILTIN_COGNITO } from 'common/constants';
 
 interface ConfigProviderProps {
   children: React.ReactNode;
@@ -19,6 +19,7 @@ const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
         const response = await fetch('/auth.json');
         const data: any = await response.json();
         localStorage.setItem(API_URL, data.api_url);
+        localStorage.setItem(BUILTIN_COGNITO, data.built_in_cognito);
       } catch (error) {
         alertMsg('Please check auth.json file', 'error');
         console.error('Failed to fetch config:', error);

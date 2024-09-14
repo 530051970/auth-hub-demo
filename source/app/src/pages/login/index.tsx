@@ -10,7 +10,7 @@ import User from './component/user';
 import './style.scss';
 import axios, { AxiosError } from 'axios';
 import apiClient from 'request/client';
-import { OIDC_STORAGE, ROUTES, TOKEN, USER } from 'common/constants';
+import { BUILTIN_COGNITO, OIDC_STORAGE, ROUTES, TOKEN, USER } from 'common/constants';
 
 const Login: FC = () => {
   const [activeTabId, setActiveTabId] = useState(LOGIN_TYPE.OIDC);
@@ -80,6 +80,7 @@ const Login: FC = () => {
       if(config.login.oidc && config.login.oidc.providers.length > 0){
         const tmp_login_params = new Map<string, any>();
         const oidcOptions:any[] =[]
+        let customize_cognito = false
         config.login.oidc.providers.forEach((item:any)=>{
           oidcOptions.push({
             label: item.name,
@@ -93,7 +94,19 @@ const Login: FC = () => {
             
           })
           tmp_login_params.set(item.name, item)
+          if(item.name=='Cognito') customize_cognito = true
         })
+        if(!customize_cognito && localStorage.getItem(BUILTIN_COGNITO)==='true'){
+          const builtinCognito = {
+            label:'Cognito',
+            iconUrl:`../../imgs/cognito.png`,
+            value: 'Cognito',
+            tags: ['Assert built-in user authentication service']
+          }
+          oidcOptions.push(builtinCognito)
+          tmp_login_params.set("cognito", builtinCognito) 
+        }
+
         tmp_tabs.push({
           label: <div style={{width:120, textAlign: 'center'}}>{config.login.oidc.label}</div>,
           id: "oidc",

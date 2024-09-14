@@ -4,22 +4,7 @@ import { alertMsg } from 'ts/common';
 import { AlertType } from 'ts/common-alert/types';
 import { ApiRequest } from 'ts/tools/types';
 
-// import { User } from 'oidc-client-ts';
-// import { AMPLIFY_CONFIG_JSON, BACKEND_URL_KEY } from 'ts/common';
-// import { AmplifyConfigType } from 'ts/types';
-
-// Back-end Request Url
-// let STORAGE_BACK_URL = localStorage.getItem(BACKEND_URL_KEY);
 const STORAGE_BACK_URL = '';
-// const getDefaultUrl = async () => {
-//   if (!STORAGE_BACK_URL) {
-//     STORAGE_BACK_URL = (
-//       await Axios.get(`/config/getConfig?timestamp=${+new Date()}`)
-//     )?.data.backend_url;
-//   }
-// };
-
-// getDefaultUrl();
 
 export const BASE_URL =
   process.env.REACT_APP_ENV === 'local'

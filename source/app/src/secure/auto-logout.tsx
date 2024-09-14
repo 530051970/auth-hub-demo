@@ -1,9 +1,9 @@
-// AutoLogout.js
+import { AUTO_LOGOUT_TIME } from 'common/constants';
 import React, { useEffect } from 'react';
 import { logout } from 'request/authing';
 
 
-const AutoLogout = ({ timeout = 15 * 60 * 1000 }) => {
+const AutoLogout = ({ timeout = AUTO_LOGOUT_TIME }) => {
   useEffect(() => {
     let timer:any;
 
