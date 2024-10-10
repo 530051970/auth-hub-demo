@@ -1,4 +1,6 @@
 import logging.config
+import os
+import boto3
 from mangum import Mangum
 
 from fastapi import FastAPI, HTTPException, Request
@@ -23,8 +25,9 @@ class LoginRequest(BaseModel):
     username: str
     password: str
     provider: str
-    client_id: str
-    redirect_uri: str
+    client_id: str = ''
+    redirect_uri: str = ''
+    builtin_cognito: bool
 
 class RefreshRequest(BaseModel):
     provider: str
@@ -39,8 +42,8 @@ authApp.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
     allow_credentials=False,
-    allow_methods=["*"],  # 允许所有方法 (GET, POST, etc.)
-    allow_headers=["*"],  # 允许所有头
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @authApp.get("/auth")
@@ -49,31 +52,11 @@ async def root():
 
 @authApp.post("/auth/login")
 async def login(request: LoginRequest):
-    client_config = __get_client_config(request.provider, request.client_id)
-    payload = {
-        "client_id": client_config["client_id"],
-        "client_secret": client_config["client_secret"],
-        "grant_type": "password",
-        "username": request.username,
-        "password": request.password
-    }
-
-    authing_login_url = f"{request.redirect_uri}/oidc/token"
-    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    response = requests.post(authing_login_url, data=payload, headers=headers)
-    if response.status_code == 200:
-        return {
-            'statusCode': 200,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': '*'
-            },
-            'body': response.json()
-        }
+    response = None
+    if request.builtin_cognito:
+        return __builtin_cognito_login(request)
     else:
-        raise HTTPException(status_code=response.status_code, detail=response.text)
+        return __custom_oidc_login(request)
 
 @authApp.get("/auth/token/verify")
 async def verify_token_main(request: Request, vRequest: VerifyRequest):
@@ -119,7 +102,49 @@ async def verify_token_main(request: RefreshRequest):
         raise HTTPException(status_code=response.status_code, detail=response.text)
 
 handler = Mangum(authApp)
-# add_pagination(app)
+
+def __builtin_cognito_login(request: LoginRequest):
+    try:
+        response = get_token_buitin_cognito(os.getenv("cognito_client_id"), request.username, request.password, os.getenv('region'))
+        return __gen_response_with_status_code(200, response)
+    except Exception as e:
+        detail = {
+            "error": "invalid_grant",
+            "error_description": str(e).split(":")[1]
+        }
+        raise HTTPException(status_code=401, detail=detail)
+
+
+def __custom_oidc_login(request):
+    client_config = __get_client_config(request.provider, request.client_id)
+    payload = {
+        "client_id": client_config["client_id"],
+        "client_secret": client_config["client_secret"],
+        "grant_type": "password",
+        "username": request.username,
+        "password": request.password
+    }
+
+    authing_login_url = f"{request.redirect_uri}/oidc/token"
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    response = requests.post(authing_login_url, data=payload, headers=headers)
+    if response.status_code == 200:
+        return __gen_response_with_status_code(response.status_code, response.json())
+    else:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+
+def __gen_response_with_status_code(code: int, body):
+    return {
+            'statusCode': code,
+            'headers': {
+               'Content-Type': 'application/json',
+               'Access-Control-Allow-Headers': 'Content-Type',
+               'Access-Control-Allow-Origin': '*',
+               'Access-Control-Allow-Methods': '*'
+            },
+            'body': body
+        }
+
 
 def __verify_token(token:str, request: VerifyRequest):
     jwks_url = f"{request.redirect_uri}/oidc/.well-known/jwks.json"
@@ -140,6 +165,18 @@ def __verify_token(token:str, request: VerifyRequest):
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+def get_token_buitin_cognito(client_id: str, username: str, password: str, region: str):
+    client = boto3.client('cognito-idp', region_name=region)
+    response = client.initiate_auth(
+        AuthFlow='USER_PASSWORD_AUTH',
+        AuthParameters={
+            'USERNAME': username,
+            'PASSWORD': password
+        },
+        ClientId=client_id
+    )
+    return response
 
 def __refresh_token(auth_info):
     tokens = {

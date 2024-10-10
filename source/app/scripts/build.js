@@ -48,7 +48,7 @@ const writeStatsJson = argv.indexOf('--stats') !== -1;
 
 // Generate configuration
 const config = configFactory('production');
-// config.devtool = false;
+config.devtool = 'source-map';
 
 // We require that you explicitly set browsers and do not fall back to
 // browserslist defaults.

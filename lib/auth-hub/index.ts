@@ -64,9 +64,16 @@ export interface AuthHubProps {
           });
         const userPoolResource = userPool.node.defaultChild as CfnUserPool;
         userPoolResource.cfnOptions.condition = enableCognito
+        const domainPrefix = `demo-authing${randomTag}`
+        const userPoolDomain = new UserPoolDomain(this, 'OidcUserPoolDomain', {
+          userPool,
+          cognitoDomain: {
+            domainPrefix: `demo-authing${randomTag}`, 
+          },
+        });
         const userPoolClient = new UserPoolClient(this, 'OidcUserPoolClient', {
           userPool,
-          generateSecret: true,
+          generateSecret: false,
           authFlows: {
             userPassword: true,
             adminUserPassword: true,
@@ -81,17 +88,12 @@ export interface AuthHubProps {
               OAuthScope.EMAIL,
               OAuthScope.PROFILE,
             ],
-            callbackUrls: [`https://${props.url}/callback`], 
-            logoutUrls: [`https://${props.url}/logout`],
+            callbackUrls: [`https://${domainPrefix}.auth.${props.region}.amazoncognito.com/callback`], 
+            logoutUrls: [`https://${domainPrefix}.auth.${props.region}.amazoncognito.com/logout`],
           },
         });
 
-        const userPoolDomain = new UserPoolDomain(this, 'OidcUserPoolDomain', {
-          userPool,
-          cognitoDomain: {
-            domainPrefix: `demo-authing${randomTag}`, 
-          },
-        });
+        
 
         (userPoolClient.node.defaultChild as CfnUserPool).cfnOptions.condition = enableCognito
 

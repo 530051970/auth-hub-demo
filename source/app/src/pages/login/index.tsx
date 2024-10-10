@@ -31,7 +31,8 @@ const Login: FC = () => {
   const [version, setVersion] = useState(0)
   const [loginParams, setLoginParams] = useState(null as any);
   const [isLoading, setIsloading] = useState(true)
-
+  const [customizeCognito, setCustomizeCognito]  = useState(false)
+  // let customize_cognito = false
   useEffect(()=>{
     const loadConfig = async ()=> {
       let response = await fetch('/config.yaml')
@@ -80,7 +81,7 @@ const Login: FC = () => {
       if(config.login.oidc && config.login.oidc.providers.length > 0){
         const tmp_login_params = new Map<string, any>();
         const oidcOptions:any[] =[]
-        let customize_cognito = false
+        let customizedcognito = false
         config.login.oidc.providers.forEach((item:any)=>{
           oidcOptions.push({
             label: item.name,
@@ -91,12 +92,14 @@ const Login: FC = () => {
             redirectUri: item.redirectUri,
             disabled: item.disabled || false,
             tags: [item.description]
-            
           })
           tmp_login_params.set(item.name, item)
-          if(item.name=='Cognito') customize_cognito = true
+          if(item.name=='Cognito') {
+            customizedcognito = true
+            setCustomizeCognito(true)
+          }
         })
-        if(!customize_cognito && localStorage.getItem(BUILTIN_COGNITO)==='true'){
+        if(!customizedcognito && localStorage.getItem(BUILTIN_COGNITO)==='true'){
           const builtinCognito = {
             label:'Cognito',
             iconUrl:`../../imgs/cognito.png`,
@@ -169,67 +172,86 @@ const Login: FC = () => {
       return;
     }
 
-    switch(selectedProvider.value){
-      case "Cognito":
-        cognitoLogin();
-        break;
-      default:
-        oidcLogin()
-        break;
-    }
+    // if(selectedProvider.value === "Cognito" && customize_cognito === false){
+    //   cognitoLogin();
+    // } else {
+    oidcLogin()
+    // }
+
+    // switch(selectedProvider.value){
+    //   case "Cognito":
+    //     cognitoLogin();
+    //     break;
+    //   default:
+    //     oidcLogin()
+    //     break;
+    // }
   }
-  const cognitoLogin = async()=>{
-  try {
-    const authResponse = await initiateAuth(selectedProvider.clientId, selectedProvider.region, username, password);
-      if(authResponse.ChallengeName==="NEW_PASSWORD_REQUIRED"){
-        navigate(ROUTES.ChangePWD, { 
-          state: {
-            session: authResponse.Session,
-            reason:"First Login",
-            username,
-            loginType: activeTabId,
-            provider: selectedProviderName,
-            author,
-            thirdLogin,
-            region: selectedProvider.region,
-            clientId: selectedProvider.clientId
-          }
-        });
-      }
-    if (authResponse.AuthenticationResult) {
-      localStorage.setItem("loginType", activeTabId || '');
-      localStorage.setItem("providerName", selectedProviderName || '');
-      localStorage.setItem("userName", username || '');
-      localStorage.setItem("idToken", authResponse.AuthenticationResult.IdToken || '');
-      localStorage.setItem("accessToken", authResponse.AuthenticationResult.AccessToken || '');
-      localStorage.setItem("refreshToken", authResponse.AuthenticationResult.RefreshToken || '');
-      localStorage.setItem("session", authResponse.Session || '');
-      navigate(ROUTES.Home)
-    }
-  } catch (error) {
-    if(error instanceof UserNotFoundException || error instanceof NotAuthorizedException) {
-      setError(error.message)
-    } else {
-      setError("Unknown error, please contact the administrator.")
-    }
-    setLogging(false)
-    return
-  }
-}
+  // const cognitoLogin = async()=>{
+
+  // try {
+  //   const authResponse = await initiateAuth(selectedProvider.clientId, selectedProvider.region, username, password);
+  //     if(authResponse.ChallengeName==="NEW_PASSWORD_REQUIRED"){
+  //       navigate(ROUTES.ChangePWD, { 
+  //         state: {
+  //           session: authResponse.Session,
+  //           reason:"First Login",
+  //           username,
+  //           loginType: activeTabId,
+  //           provider: selectedProviderName,
+  //           author,
+  //           thirdLogin,
+  //           region: selectedProvider.region,
+  //           clientId: selectedProvider.clientId
+  //         }
+  //       });
+  //     }
+  //   if (authResponse.AuthenticationResult) {
+  //     localStorage.setItem("loginType", activeTabId || '');
+  //     localStorage.setItem("providerName", selectedProviderName || '');
+  //     localStorage.setItem("userName", username || '');
+  //     localStorage.setItem("idToken", authResponse.AuthenticationResult.IdToken || '');
+  //     localStorage.setItem("accessToken", authResponse.AuthenticationResult.AccessToken || '');
+  //     localStorage.setItem("refreshToken", authResponse.AuthenticationResult.RefreshToken || '');
+  //     localStorage.setItem("session", authResponse.Session || '');
+  //     navigate(ROUTES.Home)
+  //   }
+  // } catch (error) {
+  //   if(error instanceof UserNotFoundException || error instanceof NotAuthorizedException) {
+  //     setError(error.message)
+  //   } else {
+  //     setError("Unknown error, please contact the administrator.")
+  //   }
+  //   setLogging(false)
+  //   return
+  // }
+// }
 
 const oidcLogin = async()=>{
   let response: any
   try{
-    response = await apiClient.post('/auth/login', {
-      redirect_uri: selectedProvider.redirectUri,
-      client_id: selectedProvider.clientId,
-      provider: selectedProvider.label.toLowerCase(),
-      username,
-      password
-    })
+    if (selectedProvider.value === "Cognito" && customizeCognito === false){
+      response = await apiClient.post('/auth/login', {
+        builtin_cognito: true,
+        provider: selectedProvider.label.toLowerCase(),
+        username,
+        password
+      })
+    } else {
+      response = await apiClient.post('/auth/login', {
+        builtin_cognito: false,
+        redirect_uri: selectedProvider.redirectUri,
+        client_id: selectedProvider.clientId,
+        provider: selectedProvider.label.toLowerCase(),
+        username,
+        password
+      })
+    }
   } catch (error){
     if(error instanceof AxiosError) {
-      setError(JSON.parse(error.response?.data.detail).error_description)
+      let detail = error.response?.data.detail
+      if(typeof detail === 'string') detail=JSON.parse(detail)
+      setError(detail.error_description)
     } else {
       setError("Unknown error, please contact the administrator.")
     }
@@ -243,25 +265,46 @@ const oidcLogin = async()=>{
   }))
   // localStorage.setItem(PROVIDER, selectedProvider.label)
   // localStorage.setItem(CLIENT_ID, selectedProvider.clientId)
-  console.log(response.data.body.access_token)
-  const userInfo: any = await axios.get(
-    `${selectedProvider.redirectUri}/oidc/me`,
-    {
-      headers: {
-        'Authorization': `Bearer ${response.data.body.access_token}`
+  console.log(response.data.body.access_token || response.data.body.AuthenticationResult
+  )
+  // AuthenticationResult
+  if(customizeCognito){
+    const userInfo: any = await axios.get(
+      `${selectedProvider.redirectUri}/oidc/me`,
+      {
+        headers: {
+          'Authorization': `Bearer ${response.data.body.access_token}`
+        }
       }
-    }
-  );
-  localStorage.setItem(TOKEN, JSON.stringify(response.data.body));
-  localStorage.setItem(USER, JSON.stringify(userInfo.data));
+    );
+    localStorage.setItem(TOKEN, JSON.stringify(response.data.body));
+    localStorage.setItem(USER, JSON.stringify(userInfo.data));
+  } else {
+    // const userInfo: any = await axios.get(
+    //   `${selectedProvider.redirectUri}/oidc/me`,
+    //   {
+    //     headers: {
+    //       'Authorization': `Bearer ${response.data.body.AuthenticationResult.AccessToken}`
+    //     }
+    //   }
+    // );
+    const authResult = response.data.body.AuthenticationResult
+    localStorage.setItem(TOKEN, JSON.stringify({
+      access_token: authResult.AccessToken,
+      expires_in : authResult.ExpiresIn,
+      id_token: authResult.IdToken,
+      refresh_token: authResult.RefreshToken,
+      scope: "openid profile",
+      token_type: authResult.TokenType
+    }));  
+  }
   navigate(ROUTES.Home)
-}
-
   if(isLoading){
     return (
       <Spinner/>
     )
   }
+}
   
   return (
     <div className="login-div">
@@ -357,7 +400,7 @@ const oidcLogin = async()=>{
   );
 };
 
-export default Login;
+
 const initiateAuth= async(clientId: string, region: string, username:string, password:string) => {
   const params = {
       AuthFlow: AuthFlowType.USER_PASSWORD_AUTH,
@@ -373,4 +416,6 @@ const initiateAuth= async(clientId: string, region: string, username:string, pas
   const command = new InitiateAuthCommand(params);
   return await client.send(command);
 };
+
+export default Login;
 
