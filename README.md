@@ -123,7 +123,7 @@ cd auth-hub-demo
 
 步骤 3: 在编辑器中打开配置文件自定义登录信息
 前端：source/app/public/config.yaml
-```json
+```bash
 project: "Auth Hub Demo"                               
 version: "0.0.1"
 author: "IndustryBuilders Team"
@@ -168,7 +168,7 @@ login:
       iconStyle: {"width":35}
 ```
 后端：lib/auth-hub/config.yaml
-```json
+```bash
 oidc_providers:
   authing:
     clients:
