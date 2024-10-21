@@ -1,4 +1,4 @@
-# 史上功能最齐全的身份认证系统-多OIDC共存的身份认证脚手架
+# 多OIDC共存的身份认证脚手架
 
 [English](README.md) | 简体中文
 
@@ -27,10 +27,13 @@
 
 
 ### 方案展示
-
+OIDC登录
 ![demo](/source/app/public/imgs/demo.png)
+创建账号
 ![register](/source/app/public/imgs/register.png)
+找回密码
 ![findPW](/source/app/public/imgs/findPwd.png)
+主页
 ![home](/source/app/public/imgs/home.png)
 
 链接：https://deu59wuttwjgy.cloudfront.net 
@@ -39,7 +42,7 @@
 ### 如何使用
 #### 文档结构
 该脚手架的内部组织如下，开发者在使用过程中只需要根据业务需要修改红色部分文件即可。
-```javascript
+```bash
 Auth Hub Demo
 ├── LICENSE
 ├── bin
