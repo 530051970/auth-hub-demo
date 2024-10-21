@@ -1,4 +1,4 @@
-# 多OIDC共存的身份认证脚手架
+# 史上功能最齐全的身份认证系统-多OIDC共存的身份认证脚手架
 
 [English](README.md) | 简体中文
 
@@ -25,102 +25,176 @@
 
 ![architecture](/source/app/public/imgs/architecture.png)
 
-### 安装
 
-要安装Zenith Cloudkit，请按照以下步骤操作：
+### 方案展示
 
-1. 克隆代码仓库到本地机器:
+![demo](/source/app/public/imgs/demo.png)
+![register](/source/app/public/imgs/register.png)
+![findPW](/source/app/public/imgs/findPwd.png)
+![home](/source/app/public/imgs/home.png)
 
-   ```bash
-   git clone https://github.com/530051970/auth-hub-demo.git
+链接：https://deu59wuttwjgy.cloudfront.net 
+    （Authing：用户名和密码均为demo）
 
-2. 进入 Zenith Cloudkit 目录:
+### 如何使用
+#### 文档结构
+该脚手架的内部组织如下，开发者在使用过程中只需要根据业务需要修改红色部分文件即可。
+```javascript
+Auth Hub Demo
+├── LICENSE
+├── bin
+│   └── auth-hub-demo.ts                      ......... 入口  
+├── lib
+│   └── auth-hub
+│   │   └── lambda
+│   │   │   ├── auth_api.py                   ......... 认证用API
+│   │   │   ├── authorizer.py                 ......... 认证用API-Authorizer(恒真)
+│   │   │   ├── config.yaml                   ......... 维护clientID和Secret之间的映射
+│   │   │   └── requirements.txt
+│   │   └── index.ts                          ......... Authentication Stack
+│   ├── auth-hub-demo-stack.ts                ......... Business Stack
+│   └── constant.ts
+├── source
+│   ├── api
+│   │   ├── authorizer.py                     ......... 业务用API-Authorizer（Token校验）
+│   │   ├── biz_api.py                        ......... Business API                          
+│   │   └── requirements.txt
+│   └── app
+│       ├── Dockerfile
+│       ├── README.md
+│       ├── public
+│       │   ├── imgs
+│       │   ├── locales
+│       │   ├── auth.json
+│       │   └── config.yaml                   ......... 通过此文件自定义登录方式及展现方式
+│       ├── src
+│       │   ├── App.test.tsx
+│       │   ├── App.tsx
+│       │   ├── common
+│       │   │   └── constants.ts
+│       │   ├── context
+│       │   │   ├── config-context.tsx
+│       │   │   └── config-provider.tsx
+│       │   ├── enum
+│       │   │   └── common_types.ts
+│       │   ├── i18n.ts
+│       │   ├── index.scss
+│       │   ├── index.tsx
+│       │   ├── pages
+│       │   │   ├── change-pwd                ......... 修改密码 
+│       │   │   ├── find-pwd                  ......... 查找密码
+│       │   │   ├── login                     ......... 登录
+│       │   │   ├── no-access
+│       │   │   ├── register                  ......... 创建账号
+│       │   │   └── biz-page                  ......... Business API 
+│       │   ├── react-app-env.d.ts
+│       │   ├── reportWebVitals.ts
+│       │   ├── request
+│       │   ├── routers
+│       │   ├── secure
+│       │   ├── setupTests.ts
+│       │   ├── tools
+│       │   └── ts
+│       └── tsconfig.json
+├── customise.sh
+└── tsconfig.json
+```
 
-   ```bash
-   cd auth-hub-demo/source/app
+#### 方案部署
+要部署该脚手架，请按照以下步骤操作：
 
-3. 安装必要的依赖:
+步骤 1: 克隆 GitHub 仓库
+```bash
+cd ~
+git clone https://github.com/530051970/auth-hub-demo.git
+```
 
-   ```bash
-   npm install
+步骤 2: 替换包名和栈名
 
-### Usage
+包名：一般用于自定义目录名称，通常是小写字母，多个小写字母之间用-连接，比如：ai-tool-kit
+栈名:   一般用于自定义部署的栈名，创建的资源通常以栈作为前缀，一般是首字母大写的词组成比如：AiToolKit
+```bash
+cd auth-hub-demo
+./customize.sh 包名 stack名
+```
 
-1. 安装完成后，您可以通过运行以下命令来使用Zenith Cloudkit:
+步骤 3: 在编辑器中打开配置文件自定义登录信息
+前端：source/app/public/config.yaml
+```json
+project: "Auth Hub Demo"                               
+version: "0.0.1"
+author: "IndustryBuilders Team"
+login:
+  user: 
+    label: "Username"
+    value: "username"
+    disabled: true
+  sns: 
+    label: "SNS Code"
+    value: "sns"
+    disabled: true
+  oidc:
+    label: "OIDC"
+    value: "oidc"
+    providers:
+      - name: "Authing"
+        iconUrl: "authing"
+        description: "Authentication service for ensuring application security"
+        clientId: "66b769cf5c2d439dfd37f237"
+        redirectUri: "https://demo-center.authing.cn"
+        issuer: ""
+        audience: ""
+      - name: "Keycloak"
+        iconUrl: "keycloak"
+        description: "Open Source Identity and Access Management"
+        clientId: "668d3fa8e264cf3675dcc42a"
+        redirectUri: "https://intelli-agent.authing.cn"
+        diabled: true
+  third:
+    - type: "google"
+      iconUrlSelected: "google_in"
+      iconUrl: "google"
+      iconStyle: {"width":39,"marginTop":-2}
+    - type: "facebook"
+      iconUrlSelected: "facebook_in"
+      iconUrl: "facebook"
+      iconStyle: {"width":34}
+    - type: "linkedin"
+      iconUrlSelected: "linkedin_in"
+      iconUrl: "linkedin"
+      iconStyle: {"width":35}
+```
+后端：lib/auth-hub/config.yaml
+```json
+oidc_providers:
+  authing:
+    clients:
+      - client_id: 66b769cf5c2d439dfd37f237
+        client_secret: 7dab7e589bf215fa8778609c54d90f9c
+  keycloak:
+    clients:
+      - client_id: 6fsdfdsdddddsadsf434ssd3
+        client_secret: fasded3442324dfsd8632sddsa
+```
 
-   ```bash
-   npm run start
-
-这将启动应用程序，您可以在Web浏览器中通过 http://localhost:3000 进行访问。
-
-![login](/source/app/public/imgs/login.png)
-
-### 特征
-- 特征 1: 工具集.
-  ### S3 消消乐
-  在控制台删除S3存储桶时，必须首先手动清空存储桶，如下图所示。
-
-![emptyS3](/source/app/public/imgs/emptyS3.png)
-
-  在实际场景中，经常会有数十个需要清理的S3存储桶，逐个手动删除非常低效。S3 消消乐可以一键删除多个S3存储桶，无论这些存储桶是否为空，如下图所示。
-
-![s3crusher-1](/source/app/public/imgs/s3crusher-1.png)
-![s3crusher-2](/source/app/public/imgs/s3crusher-2.png)
-
-  ### 内网穿透
-  在云应用程序开发中，经常会遇到需要从本地环境连接到VPC私有子网资源的情况。通常，这需要在VPC中设置一个堡垒主机并配置安全组，这是一个繁琐的过程。使用这个工具，您可以在两个步骤中轻松设置一个堡垒主机，从而实现从本地环境访问云资源。
-
-![nat-1](/source/app/public/imgs/nat-1.png)
-![nat-2](/source/app/public/imgs/nat-2.png)
-
-- 特征 2: 模版集市
-  这个模块将逐步发布一系列小应用程序。用户可以下载相应的模板，部署到他们的账户，并立即开始使用它们。如果需要，您可以提交一个问题来联系作者进行新模板的开发。您也可以点击这里提交PR进行二次开发。
-
-![template](/source/app/public/imgs/template.png) 
-
-  ### 数据生成器 
-  在toB产品、toC产品开发或当今比较火热的模型训练过程中，对数据集的要求变得越来越严格。一般来说，这些要求可以概括如下：
-![dataset](/source/app/public/imgs/dataset.png) 
-  此产品允许您仅通过几个简单的步骤完成从数据生成到数据注入的整个过程。具体如下：
-  1）自定义字段
-
-![customize](/source/app/public/imgs/customize-fields.png) 
-
-  2）配置其他参数
-
-![params](/source/app/public/imgs/tool-params.png) 
-
-  3）设置输出终端
-
-![endpoint](/source/app/public/imgs/endpoint.png) 
-
-  4）预览 & 开启任务
-
-![preview](/source/app/public/imgs/preview.png)   
-
-- 特征 3: 脚手架.
-  持续更新中，敬请关注。
-
-### 贡献
-我们欢迎来自社区的贡献！如果您有新功能或改进的想法，请提交issue或代码PR。
-
-1. Fork仓库.
-2. 创建自己的分支: 
-
-   ```bash
-   git checkout -b my-new-feature
-
-3. 提交变更:
-
-   ```bash
-   git commit -am 'Add some feature'
-
-4. 提交到自己的远程分支:
-
-   ```bash
-   git push origin my-new-feature
-
-5. 提交PR。
+步骤5:  部署stack
+1. 默认自带cogonito
+```bash
+npm i
+npx cdk deploy 
+```
+2. 不需要部署cognito
+```bash
+npm i
+npx cdk deploy --parameters cogonito=false
+```
+4.3 内置APIs
+|路径     |请求方式|参数       |含义      ｜
+| :----- | ---:  | :------: | :------: |
+|/login  | post  | -        | 登录      |
+|/auth/token/refresh|post|-|刷新令牌|
+|/auth/change-pwd|post|-|修改密码|
+|/auth/create-account|post|-|新增账号|
 
 ### 使用许可
 该项目根据 Apache 许可证 2.0 版获得许可 - 有关详细信息，请参见 [LICENSE](http://www.apache.org/licenses/) 文件。
