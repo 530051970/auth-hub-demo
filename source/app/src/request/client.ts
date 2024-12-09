@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios from 'axios';
 import { refreshAccessToken, isTokenExpired, logout } from './authing';
 import { API_URL, OIDC_REDIRECT_URL, TOKEN } from 'common/constants';
 // import { Constant } from 'common/constants';

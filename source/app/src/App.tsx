@@ -12,7 +12,7 @@ const AppBody = () => {
 const App: React.FC = () => {
   const token = localStorage.getItem(TOKEN)
   // TOKEN is not exsist
-  if((token == '' || token == null) && ![ROUTES.Login, ROUTES.ChangePWD, ROUTES.FindPWD, ROUTES.Register].includes(window.location.pathname)){
+  if((token === '' || token === null) && ![ROUTES.Login, ROUTES.ChangePWD, ROUTES.FindPWD, ROUTES.Register].includes(window.location.pathname)){
     window.location.href=ROUTES.Login;
   }
   //TODO: token is invalid

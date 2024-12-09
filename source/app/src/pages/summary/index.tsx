@@ -1,13 +1,11 @@
 import { Button, SpaceBetween, Textarea } from '@cloudscape-design/components';
 import { TOKEN } from 'common/constants';
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { logout, changePassword, refreshAccessToken } from 'request/authing';
 import apiClient from 'request/client';
 
 
 const Home: React.FC = () => {
-  const { t, i18n } = useTranslation();
   const [accessToken, setAccessToken] = useState("" as string)
   // const [refreshToken, setRefreshToken] = useState("" as string)
 

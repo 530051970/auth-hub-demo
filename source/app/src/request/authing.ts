@@ -2,7 +2,7 @@
 import jwtDecode from 'jwt-decode';
 import apiClient from './client';
 import axios from 'axios';
-import { API_URL, CLIENT_ID, OIDC_REDIRECT_URL, OIDC_STORAGE, PROVIDER, TOKEN, USER } from 'common/constants';
+import { API_URL, OIDC_REDIRECT_URL, OIDC_STORAGE, TOKEN, USER } from 'common/constants';
 
 export const refreshAccessToken = async () => {
   const refreshToken = JSON.parse(localStorage.getItem(TOKEN) || "").refresh_token;

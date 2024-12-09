@@ -1,5 +1,5 @@
 import { AUTO_LOGOUT_TIME } from 'common/constants';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { logout } from 'request/authing';
 
 

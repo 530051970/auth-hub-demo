@@ -288,15 +288,15 @@ const oidcLogin = async()=>{
     //     }
     //   }
     // );
-    const authResult = response.data.body.AuthenticationResult
+    const authResult = response.data.body.AuthenticationResult || response.data.body
     localStorage.setItem(TOKEN, JSON.stringify({
-      access_token: authResult.AccessToken,
-      expires_in : authResult.ExpiresIn,
-      id_token: authResult.IdToken,
-      refresh_token: authResult.RefreshToken,
+      access_token: authResult?.AccessToken|| authResult?.access_token,
+      expires_in : authResult?.ExpiresIn|| authResult?.expires_in,
+      id_token: authResult?.IdToken|| authResult?.id_token,
+      refresh_token: authResult?.RefreshToken|| authResult?.refresh_token,
       scope: "openid profile",
-      token_type: authResult.TokenType
-    }));  
+      token_type: authResult?.TokenType|| authResult?.token_type
+    })); 
   }
   navigate(ROUTES.Home)
   if(isLoading){

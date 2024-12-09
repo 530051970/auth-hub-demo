@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import ConfigContext, { CommonInfo } from './config-context';
 import { alertMsg } from 'ts/common';
 // import { Constant } from 'common/constants';
-import { useLocation } from 'react-router-dom';
 import { API_URL, BUILTIN_COGNITO } from 'common/constants';
 
 interface ConfigProviderProps {
@@ -10,7 +9,6 @@ interface ConfigProviderProps {
 }
 
 const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
-  const path = useLocation().pathname;
   const [commonInfo, setCommonInfo] = useState<CommonInfo | null>(null);
 
   useEffect(()=>{
