@@ -11,6 +11,7 @@ import './style.scss';
 import axios, { AxiosError } from 'axios';
 import apiClient from 'request/client';
 import { BUILTIN_COGNITO, OIDC_STORAGE, ROUTES, TOKEN, USER_DETAIL } from 'common/constants';
+import React from 'react';
 
 const Login: FC = () => {
   const [activeTabId, setActiveTabId] = useState(LOGIN_TYPE.OIDC);
@@ -159,13 +160,13 @@ const Login: FC = () => {
       setLogging(false)
       return;
     }
-    if(username == null || username == ''){
+    if(username == null || username === ''){
       setError("username is required")
       setVersion(ver + 1)
       setLogging(false)
       return;
     }
-    if(password == null || password == ''){
+    if(password == null || password === ''){
       setError("password is required")
       setVersion(ver + 1)
       setLogging(false)
@@ -349,23 +350,6 @@ const oidcLogin = async()=>{
       </SpaceBetween> 
     </div>
   );
-};
-
-
-const initiateAuth= async(clientId: string, region: string, username:string, password:string) => {
-  const params = {
-      AuthFlow: AuthFlowType.USER_PASSWORD_AUTH,
-      ClientId: clientId,
-      AuthParameters: {
-        USERNAME: username,
-        PASSWORD: password,
-      }
-  }
-  const client = new CognitoIdentityProviderClient({
-      region,
-  });
-  const command = new InitiateAuthCommand(params);
-  return await client.send(command);
 };
 
 export default Login;
