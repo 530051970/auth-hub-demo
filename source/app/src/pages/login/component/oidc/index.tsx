@@ -2,6 +2,8 @@ import { Input, Select } from '@cloudscape-design/components';
 import './style.scss';
 import { useContext, useEffect } from 'react';
 import ConfigContext from 'context/config-context';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 interface OIDCProps {
     provider: any,
     username: string,
@@ -13,6 +15,7 @@ interface OIDCProps {
     setSelectedProviderName: Function
 }
 const OIDC = (props: OIDCProps) => {
+    const { t } = useTranslation();
     const {provider,
            username,
            password,
@@ -23,7 +26,6 @@ const OIDC = (props: OIDCProps) => {
            setSelectedProviderName
            } = props
     const context = useContext(ConfigContext);
-
     const updateContext =(oidcContent: any)=>{
       context?.updateOIDC(oidcContent)
     }
@@ -35,7 +37,7 @@ const OIDC = (props: OIDCProps) => {
     return (<div className='oidc'>
         <div className='item'>
           <Select
-            placeholder='Please choose one OIDC provider'
+            placeholder={t('auth:chooseOIDC').toString()}
             selectedOption={provider}
             onChange={({ detail }:{detail: any}) => {
                updateContext(detail.selectedOption)
@@ -46,16 +48,11 @@ const OIDC = (props: OIDCProps) => {
             options={oidcOptions}
     />
          </div>
-    {/* </Grid> */}
-    {/* <Grid
-      gridDefinition={[{ colspan: 3 }, { colspan: 9 }]}
-    >
-        <div className='label'>Username</div> */}
         <div className='item'>
         <Input
       onChange={({ detail }) => setUsername(detail.value)}
       value={username}
-      placeholder="Please input username"
+      placeholder={t('auth:inputUsername').toString()}
     />
         </div>
         <div className='item'>
@@ -63,12 +60,9 @@ const OIDC = (props: OIDCProps) => {
         type='password'
       onChange={({ detail }) => setPassword(detail.value)}
       value={password}
-      placeholder="Please input password"
+      placeholder={t('auth:inputPassword').toString()}
     />
-        </div>
-    {/* </Grid>    */}
-    
-    
+        </div>    
     </div>)
 }
 

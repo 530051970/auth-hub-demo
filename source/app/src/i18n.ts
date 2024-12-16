@@ -30,18 +30,7 @@ i18n
   // for all options read: https://www.i18next.com/overview/configuration-options
   .init({
     ns: [
-      'common',
-      'account',
-      'home',
-      'summary',
-      'datagenerate',
-      'deletes3',
-      'templates',
-      'identifier',
-      'info',
-      'timeline',
-      'taskreport',
-      'sshAgent'
+      'auth',
     ],
     defaultNS: 'common',
     fallbackLng: 'en',

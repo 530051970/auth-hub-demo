@@ -5,19 +5,17 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import yaml from 'yaml';
 import './style.scss';
 import { ROUTES } from 'common/constants';
+import React from 'react';
 
 const ChangePWD: FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [projectName, setProjectName] = useState("" as string);
   const [selectedThird, setSelectedThird] = useState("" as string);
-  // const [loginType, setLoginType] = useState([] as any[]);
   const [newPass, setNewPass] = useState("" as string);
   const [error, setError] = useState("" as string);
   const [confirmPass, setConfirmPass] = useState("" as string);
   const [confirmPassError, setConfirmPassError] = useState("" as string);
-  // const [thirdLogin, setThirdLogin] = useState([] as any[]);
-  // const [author, setAuthor] =useState("" as string)
   const [items, setItems] = useState([] as any[]);
   const [config, setConfig]=useState(null as any);
   const [isLoading, setIsloading] = useState(true)
@@ -37,7 +35,7 @@ const ChangePWD: FC = () => {
 
   useEffect(()=>{
     setIsloading(true)
-    if(params.provider == undefined){
+    if(params.provider === undefined){
       const loadConfig = async ()=> {
         let response = await fetch('/config.yaml')
         let data = await response.text()

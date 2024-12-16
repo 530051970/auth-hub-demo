@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import yaml from 'yaml';
 import './style.scss';
 import { ROUTES } from 'common/constants';
+import React from 'react';
 
 const FindPWD: FC = () => {
   const navigate = useNavigate();

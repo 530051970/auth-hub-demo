@@ -1,4 +1,3 @@
-import { AuthFlowType, CognitoIdentityProviderClient, InitiateAuthCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { Alert, Button, Checkbox, Grid, Link, SpaceBetween, Spinner, Tabs } from '@cloudscape-design/components';
 import { LOGIN_TYPE } from 'enum/common_types';
 import { FC, useEffect, useState } from 'react';
@@ -10,8 +9,9 @@ import User from './component/user';
 import './style.scss';
 import axios, { AxiosError } from 'axios';
 import apiClient from 'request/client';
-import { BUILTIN_COGNITO, OIDC_STORAGE, ROUTES, TOKEN, USER_DETAIL } from 'common/constants';
+import { BUILTIN_COGNITO, EN_LANG, OIDC_STORAGE, ROUTES, TOKEN, USER_DETAIL, ZH_LANG, ZH_LANGUAGE_LIST } from 'common/constants';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const Login: FC = () => {
   const [activeTabId, setActiveTabId] = useState(LOGIN_TYPE.OIDC);
@@ -30,11 +30,19 @@ const Login: FC = () => {
   const [projectName, setProjectName] = useState("" as string)
   const [author, setAuthor] = useState("" as string)
   const [version, setVersion] = useState(0)
-  // const [loginParams, setLoginParams] = useState(null as any);
+  const { t, i18n } = useTranslation();
+  const [lang, setLang]= useState('')
   const [isLoading, setIsloading] = useState(true)
   const [customizeCognito, setCustomizeCognito]  = useState(false)
-  // let customize_cognito = false
+
   useEffect(()=>{
+    if (ZH_LANGUAGE_LIST.includes(i18n.language)) {
+      setLang(ZH_LANG)
+      i18n.changeLanguage(ZH_LANG);
+    } else {
+      setLang(EN_LANG)
+      i18n.changeLanguage(EN_LANG);
+    }
     const loadConfig = async ()=> {
       let response = await fetch('/config.yaml')
       let data = await response.text()
@@ -55,7 +63,7 @@ const Login: FC = () => {
       setAuthor(config.author)
       if(config.login.user){
         tmp_tabs.push({
-          label: <div style={{width:100, textAlign: 'right'}}>{config.login.user.label}</div>,
+          label: <div style={{width:100, textAlign: 'right'}}>{t('auth:username')}</div>,
           id: "user",
           content: (<User 
                       username={username}
@@ -68,7 +76,7 @@ const Login: FC = () => {
       }
       if(config.login.sns){
         tmp_tabs.push({
-          label: <div style={{paddingLeft:20,width:120, textAlign: 'center'}}>{config.login.sns.label}</div>,
+          label: <div style={{paddingLeft:15,width:120, textAlign: 'center'}}>{t('auth:sns')}</div>,
           id: "sns",
           disabled: config.login.sns.disabled || false,
           content: (<SNS 
@@ -84,15 +92,27 @@ const Login: FC = () => {
         const oidcOptions:any[] =[]
         let customizedcognito = false
         config.login.oidc.providers.forEach((item:any)=>{
+          let description = ""
+          switch (item.name) {
+            case "keycloak":
+              description = t('auth:keycloakDesc');
+              break;
+            case "authing":
+              description = t('auth:authingDesc');
+              break;
+            default:
+              description = t('auth:cognitoDesc');
+              break;
+          }
           oidcOptions.push({
-            label: item.name,
-            iconUrl:`../../imgs/${item.iconUrl}.png`,
+            label: item.label,
+            iconUrl:`../../imgs/${item.name}.png`,
             value: item.name,
             clientId: item.clientId,
             clientSecret: item.clientSecret,
             redirectUri: item.redirectUri,
             disabled: item.disabled || false,
-            tags: [item.description]
+            tags: [description]
           })
           tmp_login_params.set(item.name, item)
           if(item.name === 'Cognito') {
@@ -112,7 +132,7 @@ const Login: FC = () => {
         }
 
         tmp_tabs.push({
-          label: <div style={{width:120, textAlign: 'center'}}>{config.login.oidc.label}</div>,
+          label: <div style={{width:120, textAlign: 'center'}}>{t('auth:oidc')}</div>,
           id: "oidc",
           disabled: config.login.oidc.disabled || false,
           content: (<OIDC
@@ -133,8 +153,18 @@ const Login: FC = () => {
         setThirdLogin(tmp_third_login)
       }
       setTabs(tmp_tabs)}
-  },[config, selectedProvider, username, password])
-   
+  },[config, selectedProvider, username, password, lang])
+
+  const changeLanguage = () => {
+    if(lang===EN_LANG){
+      setLang(ZH_LANG)
+      i18n.changeLanguage(ZH_LANG);
+    } else {
+      setLang(EN_LANG)
+      i18n.changeLanguage(EN_LANG);
+    } 
+  };
+
   const forgetPwd =()=>{
     navigate(ROUTES.FindPWD)
   }
@@ -214,11 +244,9 @@ const oidcLogin = async()=>{
     client_id: selectedProvider.clientId,
     redirect_uri: selectedProvider.redirectUri
   }))
-  // localStorage.setItem(PROVIDER, selectedProvider.label)
-  // localStorage.setItem(CLIENT_ID, selectedProvider.clientId)
   console.log(response.data.body.access_token || response.data.body.AuthenticationResult
   )
-  // AuthenticationResult
+
   if(customizeCognito){
     userInfo = await axios.get(
       `${selectedProvider.redirectUri}/oidc/me`,
@@ -263,7 +291,7 @@ const oidcLogin = async()=>{
       <SpaceBetween direction='vertical' size='m'>  
       <div className='container'>
         <div className='banner'>{projectName}</div>
-        <div className='sub-title'>Supported by {author}</div>
+        <div className='sub-title'>{t('auth:support-prefix')} {author} {t('auth:support-postfix')} <Link variant="info" onFollow={()=>changeLanguage()}>{t('auth:changeLang')}</Link></div>
         <div className='tab' style={{paddingLeft:'10%'}}>
         <Tabs
           onChange={({ detail }) =>
@@ -283,22 +311,22 @@ const oidcLogin = async()=>{
       }
       checked={keep}
     >
-      <span className='keep'>Keep me logged in</span>
+      <span className='keep'>{t('auth:keepLogin')}</span>
     </Checkbox>
       </div>
       <div style={{textAlign:"right"}}>
       <Link onFollow={forgetPwd} >
-      ForgotPassword
+      {t('auth:forgetPWD')}
     </Link>
     &nbsp;&nbsp;&nbsp;
     <Link onFollow={toRegister} >
-      Register
+      {t('auth:register')}
     </Link>
       </div>
     </Grid>
     </div>
     <div className='bottom-button'>
-    <Button variant="primary" className='login-buttom' loading={logging} onClick={loginSystem}>Log in</Button>
+    <Button variant="primary" className='login-buttom' loading={logging} onClick={loginSystem}>{t('auth:login')}</Button>
     </div>
     <div style={{display:'none'}}>{selectedProviderName}</div>
     <div style={{color: 'rgb(128, 128, 128)', fontSize: 14,marginTop: 30, width:'90%'}}>
@@ -311,13 +339,13 @@ const oidcLogin = async()=>{
           })}
         </SpaceBetween>
         <div style={{paddingTop:15, textAlign:'right'}}>
-          <span style={{color: 'rgb(128, 128, 128)'}}>You can also&nbsp;&nbsp;</span>
-          <Link onFollow={toRegister}>Login with Midway</Link>
+          <span style={{color: 'rgb(128, 128, 128)'}}>{t('auth:youCanAlso')}&nbsp;&nbsp;</span>
+          <Link onFollow={toRegister}>{t('auth:loginWithMidway')}</Link>
         </div>
       </Grid>):(<Grid gridDefinition={[{colspan:12}]}>
         <div style={{paddingTop:5, textAlign:'center'}}>
-          <span style={{color: 'rgb(128, 128, 128)'}}>You can also&nbsp;&nbsp;</span>
-          <Link onFollow={toRegister}>Login with Amazon</Link>
+          <span style={{color: 'rgb(128, 128, 128)'}}>{t('auth:youCanAlso')}&nbsp;&nbsp;</span>
+          <Link onFollow={toRegister}>{t('loginWithMidway')}</Link>
         </div>
         <div style={{display:"none"}}>{version}</div>
       </Grid>)}

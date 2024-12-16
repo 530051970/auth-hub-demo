@@ -1,3 +1,14 @@
+export const ZH_LANGUAGE_LIST = ['zh', 'zh-cn', 'zh_CN', 'zh-CN'];
+export const EN_LANGUAGE_LIST = ['en', 'en-US', 'en_UK'];
+export const ZH_TEXT = '简体中文';
+export const EN_TEXT = 'English(US)';
+export const EN_LANG = 'en';
+export const ZH_LANG = 'zh';
+export const LANGUAGE_ITEMS = [
+  { id: EN_LANG, text: EN_TEXT },
+  { id: ZH_LANG, text: ZH_TEXT },
+];
+
 export const TOKEN = "token"
 export const USER = "user"
 export const USER_DETAIL = "user_detail"

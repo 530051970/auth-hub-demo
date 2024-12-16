@@ -1,5 +1,6 @@
-import { Button, Grid, Input, SpaceBetween } from '@cloudscape-design/components';
+import { Grid, Input } from '@cloudscape-design/components';
 import './style.scss';
+import React from 'react';
 interface SNSProps{
    username:string
    password: string

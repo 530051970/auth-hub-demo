@@ -5,6 +5,7 @@ import FindPWD from 'pages/find-pwd';
 import Login from 'pages/login';
 import Register from 'pages/register';
 import Home from 'pages/summary';
+import React from 'react';
 import { Suspense } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
