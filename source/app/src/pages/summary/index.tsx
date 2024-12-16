@@ -7,12 +7,10 @@ import apiClient from 'request/client';
 
 const Home: React.FC = () => {
   const [accessToken, setAccessToken] = useState("" as string)
-  // const [refreshToken, setRefreshToken] = useState("" as string)
 
   const refresh= async()=>{
     const res = await refreshAccessToken();
-    setAccessToken(res)
-    // apiClient.get("/auth/token/refresh")   
+    setAccessToken(res) 
   }
 
   const logoutSys=()=>{
@@ -30,9 +28,7 @@ const Home: React.FC = () => {
       tokenDetail = JSON.parse(token);
     } catch (e) {
       console.error("Failed to parse token", e);
-      // Handle the error, e.g., clear the storage or redirect to login
     }
-    // const tokenDetail = JSON.parse(token)
     if(token!==''){
       setAccessToken(tokenDetail.access_token);
       // setRefreshToken(tokenDetail.refresh_token);
@@ -41,6 +37,7 @@ const Home: React.FC = () => {
     // apiClient.get("/biz/summary")
   },[])
   return (
+    <>
     <div style={{ height:'90%',marginTop:'10%',width:'70%',marginLeft:'10%'}}>
     <h2>Welcome to use AuthHubDemo.</h2>
     <div style={{marginTop:30,marginBottom:20}}>
@@ -63,6 +60,7 @@ const Home: React.FC = () => {
     </SpaceBetween>
     </SpaceBetween>
     </div>
+    </>
   );
 };
 

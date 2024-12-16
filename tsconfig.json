@@ -4,7 +4,10 @@
     "module": "commonjs",
     "lib": [
       "es2020",
-      "dom"
+      "dom",
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
     ],
     "declaration": true,
     "strict": true,
@@ -22,7 +25,8 @@
     "strictPropertyInitialization": false,
     "typeRoots": [
       "./node_modules/@types"
-    ]
+    ],
+    "jsx": "react"
   },
   "exclude": [
     "node_modules",
