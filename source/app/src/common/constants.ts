@@ -1,5 +1,6 @@
 export const TOKEN = "token"
 export const USER = "user"
+export const USER_DETAIL = "user_detail"
 export const BUILTIN_COGNITO = "build_in_cognito"
 export const API_URL = "api_url"
 export const OIDC_STORAGE = "oidc"
