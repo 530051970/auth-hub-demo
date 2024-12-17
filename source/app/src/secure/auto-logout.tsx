@@ -4,9 +4,15 @@ import { logout } from 'request/authing';
 
 
 const AutoLogout = ({ timeout = AUTO_LOGOUT_TIME }) => {
-  useEffect(() => {
-    let timer:any;
 
+
+  useEffect(() => {
+    
+    if (window.location.pathname === '/login') {
+      console.log('Auto logout disabled on login page');
+      return;
+    }
+    let timer:any;
     const resetTimer = () => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
