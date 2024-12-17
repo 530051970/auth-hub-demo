@@ -22,7 +22,7 @@ const App: React.FC = () => {
   } else {
       return (
         <>
-          <AutoLogout timeout={1 * 60 * 1000} />
+          <AutoLogout timeout={15 * 60 * 1000} />
           <AppBody/>
         </>
       );
