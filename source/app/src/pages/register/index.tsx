@@ -3,8 +3,9 @@ import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import yaml from 'yaml';
 import './style.scss';
-import { ROUTES } from 'common/constants';
+import { EN_LANG, ROUTES, ZH_LANG, ZH_LANGUAGE_LIST } from 'common/constants';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const Register: FC = () => {
   const navigate = useNavigate();
@@ -18,10 +19,19 @@ const Register: FC = () => {
   const [email, setEmail] =useState("" as string)
   const [oidcProvider, setOidcProvider] =useState(null as any)
   const [oidcOptions, setOidcOptions] = useState([] as any[]);
+  const { t, i18n } = useTranslation();
+  const [lang, setLang]= useState('')
   
   useEffect(()=>{
     let tmp_login_type: any[] =[]
     let tmp_third_login: any[] =[]
+    if (ZH_LANGUAGE_LIST.includes(i18n.language)) {
+      setLang(ZH_LANG)
+      i18n.changeLanguage(ZH_LANG);
+    } else {
+      setLang(EN_LANG)
+      i18n.changeLanguage(EN_LANG);
+    }
     const loadConfig = async ()=> {
       let response = await fetch('/config.yaml')
       let data = await response.text()
@@ -32,14 +42,14 @@ const Register: FC = () => {
       setAuthor(configData.author)
       if(configData.login.user){
         tmp_login_type.push({
-          label: configData.login.user.label,
+          label: t('auth:username'),
           value: configData.login.user.value,
           disabled: configData.login.user.disabled || false
         })
       }
       if(configData.login.sns){
         tmp_login_type.push({
-          label: configData.login.sns.label,
+          label: t('auth:sns'),
           value: configData.login.sns.value,
           disabled: configData.login.sns.disabled || false
         })
@@ -48,14 +58,14 @@ const Register: FC = () => {
         const oidcOptions:any[] =[]
         configData.login.oidc.providers.forEach((item:any)=>{
           oidcOptions.push({
-            label: item.name,
-            iconUrl:`../../imgs/${item.iconUrl}.png`,
+            label: item.label,
+            iconUrl:`../../imgs/${item.name}.png`,
             value: item.name,
-            tags: [item.description]
+            tags: [genOIDCDesc(item.name)]
           })
         })
         tmp_login_type.push({
-          label: configData.login.oidc.label,
+          label: t('auth:oidc'),
           value: configData.login.oidc.value,
           disabled: configData.login.oidc.disabled || false
         })
@@ -68,7 +78,33 @@ const Register: FC = () => {
       setLoginType(tmp_login_type)
     })
   })
-   
+
+  const changeLanguage = () => {
+    if(lang===EN_LANG){
+      setLang(ZH_LANG)
+      i18n.changeLanguage(ZH_LANG);
+    } else {
+      setLang(EN_LANG)
+      i18n.changeLanguage(EN_LANG);
+    } 
+  };
+  
+  const genOIDCDesc=(name: string)=>{
+    let description = ""
+    switch(name){
+      case "keycloak":
+        description = t('auth:keycloakDesc');
+        break;
+      case "authing":
+        description = t('auth:authingDesc');
+        break;
+      default:
+        description = t('auth:cognitoDesc');
+        break;
+    }
+    return description
+  }
+
   const toLogin =()=>{
     navigate(ROUTES.Login)
   }
@@ -91,7 +127,7 @@ const Register: FC = () => {
   }
 
   const registerAccount = ()=>{
-    setError("hahaha")
+    setError(t('auth:waiting'))
   }
 
   return (
@@ -99,10 +135,10 @@ const Register: FC = () => {
       <div className='container'>
         {/* <img src={banner} alt='banner' className='banner'/> */}
         <div className='banner'>{projectName}</div>
-        <div className='sub-title'>Supported by {author}</div>
+        <div className='sub-title'>{t('auth:support-prefix')} {author} {t('auth:support-postfix')} <Link variant="info" onFollow={()=>changeLanguage()}>{t('auth:changeLang')}</Link></div>
         <div className='tab' style={{paddingLeft:'10%'}}>
           <div style={{height:270,width:'90%'}}>
-          <div style={{color:"#000000a6",fontSize:18, fontWeight:800, marginBottom:20}}>Create Account</div>
+          <div style={{color:"#000000a6",fontSize:18, fontWeight:800, marginBottom:20}}>{t('auth:create.title')}</div>
           <div style={{width:'100%'}}>
             <Grid gridDefinition={[{colspan:4},{colspan:4},{colspan:4}]}>
               {loginType.map(item=>(<div>
@@ -134,12 +170,12 @@ const Register: FC = () => {
               </div>):((selectedLoginType==='oidc')?(<div style={{marginTop:15}}>
                 <SpaceBetween size='s' direction='vertical'>
                 <FormField
-                  description="Please choose one OIDC provider..."
-                  label="OIDC Provider"
+                  description={t("auth:create:oidcDesc")}
+                  label={t("auth:create:oidc")}
                 >
                   {/* <div className='item'> */}
                     <Select
-                      placeholder='Please choose one OIDC provider'
+                      placeholder={t("auth:create:oidcPlaceholder").toString()}
                       selectedOption={oidcProvider}
                       onChange={({ detail }:{detail: any}) =>
                         setOidcProvider(detail.selectedOption)
@@ -150,36 +186,38 @@ const Register: FC = () => {
                 </FormField>
                 <Grid gridDefinition={[{colspan:5},{colspan:7}]} >
                 <FormField
-      description="You can use username to login."
-      label="Username"
-    >
-      <Input
-        value={email}
-        placeholder='eg: Peter'
-        onChange={event =>
-          setEmail(event.detail.value)
-        }
-      />
-    </FormField><FormField
-      description="We will send a password to this email..."
-      label="Email"
-    >
-      <Input
-        value={email}
-        placeholder='eg: developer@cloud.com'
-        onChange={event =>
-          setEmail(event.detail.value)
-        }
-      />
-    </FormField>      
-                </Grid></SpaceBetween>
+                  description={t("auth:create:usernameDesc")}
+                  label={t("auth:create:username")}
+                >
+                  <Input
+                    value={email}
+                    placeholder={t('auth:create:usernamePlaceHolder').toString()}
+                    onChange={event =>
+                      setEmail(event.detail.value)
+                    }
+                  />
+                </FormField>
+                <FormField
+                  description={t("auth:create:emailDesc")}
+                  label={t("auth:create:email")}
+                >
+                  <Input
+                    value={email}
+                    placeholder={t('auth:create:emailPlaceHolder').toString()}
+                    onChange={event =>
+                      setEmail(event.detail.value)
+                    }
+                  />
+                </FormField>      
+              </Grid>
+            </SpaceBetween>
     
               </div>):(<>
               </>))}
           </div>
         </div>
         <div className='bottom-button'>
-          <Button variant="primary" className='login-buttom' onClick={()=>registerAccount()}>Register</Button>
+          <Button variant="primary" className='login-buttom' onClick={()=>registerAccount()}>{t('auth:create:register')}</Button>
         </div>
         <div style={{color: 'rgb(128, 128, 128)', fontSize: 14,marginTop: 30, width:'90%'}}>
           {(thirdLogin && thirdLogin.length>0)?(
@@ -193,14 +231,14 @@ const Register: FC = () => {
               }
             </SpaceBetween>
             <div style={{paddingTop:15, textAlign:'right'}}>
-              <span style={{color: 'rgb(128, 128, 128)'}}>Already have an account? </span>
-              <Link onFollow={toLogin}>Login</Link>
+              <span style={{color: 'rgb(128, 128, 128)'}}>{t('auth:create:hasAccount')}</span>
+              <Link onFollow={toLogin}>{t('auth:create:login')}</Link>
             </div>
           </Grid>):(
           <Grid gridDefinition={[{colspan:12}]}>
             <div style={{paddingTop:5, textAlign:'right'}}>
-              <span style={{color: 'rgb(128, 128, 128)'}}>Already have an account? </span>
-              <Link onFollow={toLogin}>Login</Link>
+              <span style={{color: 'rgb(128, 128, 128)'}}>{t('auth:create:hasAccount')}</span>
+              <Link onFollow={toLogin}>{t('auth:create:login')}</Link>
             </div>
           </Grid>)}
           <div style={{marginTop:10,textAlign:'right',color:'red',fontWeight:800,height:16}}>{error}</div>
