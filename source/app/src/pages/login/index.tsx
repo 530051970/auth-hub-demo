@@ -32,8 +32,10 @@ const Login: FC = () => {
   const [version, setVersion] = useState(0)
   const { t, i18n } = useTranslation();
   const [lang, setLang]= useState('')
-  const [isLoading, setIsloading] = useState(true)
+  const [isLoading, setIsloading] = useState(true as boolean)
   const [customizeCognito, setCustomizeCognito]  = useState(false)
+  const [originalConfig, setOriginalConfig] = useState(null as any)
+  // const [loading, setLoading] = useState(false as boolean)
 
   useEffect(()=>{
     if (ZH_LANGUAGE_LIST.includes(i18n.language)) {
@@ -49,14 +51,24 @@ const Login: FC = () => {
       return yaml.parse(data);
     }
     loadConfig().then(configData =>{
-      setConfig(configData)
-      setIsloading(false)
+      updateEnv(configData)
+      setOriginalConfig(configData)
+      // setIsloading(false)
     })
     setError("")
   },[])
 
   useEffect(()=>{
-      if(config!==null){
+      // setIsloading(true)
+      updateEnv(config)
+      setOriginalConfig(config)
+      // setIsloading(false)
+  },[config, selectedProvider, username, password])
+  
+
+  const updateEnv = (config: any)=>{
+    setIsloading(true)
+    if(config!==null){
       let tmp_tabs: any[] =[]
       let tmp_third_login: any[] =[]
       setProjectName(config.project)
@@ -152,17 +164,21 @@ const Login: FC = () => {
         tmp_third_login = config.login.third
         setThirdLogin(tmp_third_login)
       }
-      setTabs(tmp_tabs)}
-  },[config, selectedProvider, username, password, lang])
+      setTabs(tmp_tabs)
+      setIsloading(false)
+    }
+  }
 
   const changeLanguage = () => {
     if(lang===EN_LANG){
       setLang(ZH_LANG)
       i18n.changeLanguage(ZH_LANG);
+      // setIsloading(false)
     } else {
       setLang(EN_LANG)
       i18n.changeLanguage(EN_LANG);
-    } 
+    }
+    updateEnv(originalConfig)
   };
 
   const forgetPwd =()=>{
@@ -287,6 +303,7 @@ const oidcLogin = async()=>{
 }
   
   return (
+    isLoading?(<div style={{paddingTop:"40%", paddingLeft:"45%"}}><Spinner size="large" /></div>):(
     <div className="login-div">
       <SpaceBetween direction='vertical' size='m'>  
       <div className='container'>
@@ -376,7 +393,7 @@ const oidcLogin = async()=>{
       )}
       </div>
       </SpaceBetween> 
-    </div>
+    </div>)
   );
 };
 

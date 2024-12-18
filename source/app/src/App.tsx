@@ -14,6 +14,7 @@ const App: React.FC = () => {
   // TOKEN is not exsist
   if((token === '' || token === null) && ![ROUTES.Login, ROUTES.ChangePWD, ROUTES.FindPWD, ROUTES.Register].includes(window.location.pathname)){
     window.location.href=ROUTES.Login;
+    return null;
   }
   //TODO: token is invalid
   // No Access
