@@ -34,8 +34,6 @@ const Login: FC = () => {
   const [lang, setLang]= useState('')
   const [isLoading, setIsloading] = useState(true as boolean)
   const [customizeCognito, setCustomizeCognito]  = useState(false)
-  const [originalConfig, setOriginalConfig] = useState(null as any)
-  // const [loading, setLoading] = useState(false as boolean)
 
   useEffect(()=>{
     if (ZH_LANGUAGE_LIST.includes(i18n.language)) {
@@ -51,20 +49,14 @@ const Login: FC = () => {
       return yaml.parse(data);
     }
     loadConfig().then(configData =>{
-      updateEnv(configData)
-      setOriginalConfig(configData)
-      // setIsloading(false)
+      setConfig(configData)
     })
     setError("")
   },[])
 
   useEffect(()=>{
-      // setIsloading(true)
       updateEnv(config)
-      setOriginalConfig(config)
-      // setIsloading(false)
-  },[config, selectedProvider, username, password])
-  
+  },[config, selectedProvider, username, password, lang])
 
   const updateEnv = (config: any)=>{
     setIsloading(true)
@@ -158,7 +150,6 @@ const Login: FC = () => {
             setPassword={setPassword}
           />)
         })
-        // setLoginParams(tmp_login_params)
       }
       if(config.login.third && config.login.third.length > 0){
         tmp_third_login = config.login.third
@@ -178,7 +169,6 @@ const Login: FC = () => {
       setLang(EN_LANG)
       i18n.changeLanguage(EN_LANG);
     }
-    updateEnv(originalConfig)
   };
 
   const forgetPwd =()=>{
@@ -221,86 +211,85 @@ const Login: FC = () => {
     oidcLogin()
   }
 
-let userInfo: any= {}
-const oidcLogin = async()=>{
-  let response: any
-  try{
-    if (selectedProvider.value === "Cognito" && customizeCognito === false){
-      response = await apiClient.post('/auth/login', {
-        builtin_cognito: true,
-        provider: selectedProvider.label.toLowerCase(),
-        username,
-        password
-      })
-    } else {
-      response = await apiClient.post('/auth/login', {
-        builtin_cognito: false,
-        redirect_uri: selectedProvider.redirectUri,
-        client_id: selectedProvider.clientId,
-        provider: selectedProvider.label.toLowerCase(),
-        username,
-        password
-      })
-    }
-  } catch (error){
-    if(error instanceof AxiosError) {
-      let detail = error.response?.data.detail
-      if(typeof detail === 'string') detail=JSON.parse(detail)
-      if(detail){
-        setError(detail.error_description)
+  let userInfo: any= {}
+  const oidcLogin = async()=>{
+    let response: any
+    try{
+      if (selectedProvider.value === "Cognito" && customizeCognito === false){
+        response = await apiClient.post('/auth/login', {
+          builtin_cognito: true,
+          provider: selectedProvider.label.toLowerCase(),
+          username,
+          password
+        })
+      } else {
+        response = await apiClient.post('/auth/login', {
+          builtin_cognito: false,
+          redirect_uri: selectedProvider.redirectUri,
+          client_id: selectedProvider.clientId,
+          provider: selectedProvider.label.toLowerCase(),
+          username,
+          password
+        })
       }
-    } else {
-      setError("Unknown error, please contact the administrator.")
+    } catch (error){
+      if(error instanceof AxiosError) {
+        let detail = error.response?.data.detail
+        if(typeof detail === 'string') detail=JSON.parse(detail)
+        if(detail){
+          setError(detail.error_description)
+        }
+      } else {
+        setError("Unknown error, please contact the administrator.")
+      }
+      setLogging(false)
+      return
     }
-    setLogging(false)
-    return
-  }
-  localStorage.setItem(OIDC_STORAGE, JSON.stringify({
-    provider: selectedProvider.label,
-    client_id: selectedProvider.clientId,
-    redirect_uri: selectedProvider.redirectUri
-  }))
-  console.log(response.data.body.access_token || response.data.body.AuthenticationResult
-  )
+    localStorage.setItem(OIDC_STORAGE, JSON.stringify({
+      provider: selectedProvider.label,
+      client_id: selectedProvider.clientId,
+      redirect_uri: selectedProvider.redirectUri
+    }))
+    console.log(response.data.body.access_token || response.data.body.AuthenticationResult)
 
-  if(customizeCognito){
-    userInfo = await axios.get(
-      `${selectedProvider.redirectUri}/oidc/me`,
-      {
-        headers: {
-          'Authorization': `Bearer ${response.data.body.access_token}`
+    if(customizeCognito){
+      userInfo = await axios.get(
+        `${selectedProvider.redirectUri}/oidc/me`,
+        {
+          headers: {
+            'Authorization': `Bearer ${response.data.body.access_token}`
+          }
         }
-      }
-    );
-    localStorage.setItem(TOKEN, JSON.stringify(response.data.body));
-    localStorage.setItem(USER_DETAIL, JSON.stringify(userInfo.data));
-  } else {
-    userInfo = await axios.get(
-      `${selectedProvider.redirectUri}/oidc/me`,
-      {
-        headers: {
-          'Authorization': `Bearer ${response.data.body.access_token}`
+      );
+      localStorage.setItem(TOKEN, JSON.stringify(response.data.body));
+      localStorage.setItem(USER_DETAIL, JSON.stringify(userInfo.data));
+    } else {
+      userInfo = await axios.get(
+        `${selectedProvider.redirectUri}/oidc/me`,
+        {
+          headers: {
+            'Authorization': `Bearer ${response.data.body.access_token}`
+          }
         }
-      }
-    );
-    const authResult = response.data.body.AuthenticationResult || response.data.body
-    localStorage.setItem(TOKEN, JSON.stringify({
-      access_token: authResult?.AccessToken|| authResult?.access_token,
-      expires_in : authResult?.ExpiresIn|| authResult?.expires_in,
-      id_token: authResult?.IdToken|| authResult?.id_token,
-      refresh_token: authResult?.RefreshToken|| authResult?.refresh_token,
-      scope: "openid profile",
-      token_type: authResult?.TokenType|| authResult?.token_type
-    }));
-    localStorage.setItem(USER_DETAIL, JSON.stringify(userInfo.data))  
+      );
+      const authResult = response.data.body.AuthenticationResult || response.data.body
+      localStorage.setItem(TOKEN, JSON.stringify({
+        access_token: authResult?.AccessToken|| authResult?.access_token,
+        expires_in : authResult?.ExpiresIn|| authResult?.expires_in,
+        id_token: authResult?.IdToken|| authResult?.id_token,
+        refresh_token: authResult?.RefreshToken|| authResult?.refresh_token,
+        scope: "openid profile",
+        token_type: authResult?.TokenType|| authResult?.token_type
+      }));
+      localStorage.setItem(USER_DETAIL, JSON.stringify(userInfo.data))  
+    }
+    navigate(ROUTES.Home)
+    if(isLoading){
+      return (
+        <Spinner/>
+      )
+    }
   }
-  navigate(ROUTES.Home)
-  if(isLoading){
-    return (
-      <Spinner/>
-    )
-  }
-}
   
   return (
     isLoading?(<div style={{paddingTop:"40%", paddingLeft:"45%"}}><Spinner size="large" /></div>):(
@@ -310,78 +299,63 @@ const oidcLogin = async()=>{
         <div className='banner'>{projectName}</div>
         <div className='sub-title'>{t('auth:support-prefix')} {author} {t('auth:support-postfix')} <Link variant="info" onFollow={()=>changeLanguage()}>{t('auth:changeLang')}</Link></div>
         <div className='tab' style={{paddingLeft:'10%'}}>
-        <Tabs
-          onChange={({ detail }) =>
-            setActiveTabId(detail.activeTabId)
-          }
-          activeTabId={activeTabId}
-          tabs={tabs}
-        />
-        <div className='bottom-setting'>
-    <Grid
-      gridDefinition={[{ colspan: 4 },{ colspan: 8 }]}
-    >
-      <div>
-      <Checkbox
-      onChange={({ detail }) =>
-        setKeep(detail.checked)
-      }
-      checked={keep}
-    >
-      <span className='keep'>{t('auth:keepLogin')}</span>
-    </Checkbox>
-      </div>
-      <div style={{textAlign:"right"}}>
-      <Link onFollow={forgetPwd} >
-      {t('auth:forgetPWD')}
-    </Link>
-    &nbsp;&nbsp;&nbsp;
-    <Link onFollow={toRegister} >
-      {t('auth:register')}
-    </Link>
-      </div>
-    </Grid>
-    </div>
-    <div className='bottom-button'>
-    <Button variant="primary" className='login-buttom' loading={logging} onClick={loginSystem}>{t('auth:login')}</Button>
-    </div>
-    <div style={{display:'none'}}>{selectedProviderName}</div>
-    <div style={{color: 'rgb(128, 128, 128)', fontSize: 14,marginTop: 30, width:'90%'}}>
-      {(thirdLogin && thirdLogin.length>0)?(<Grid gridDefinition={[{colspan:6},{colspan:6}]}>
-        <SpaceBetween direction='horizontal' size='s'>
-          {thirdLogin.map(item=>{
-             return (<div key={item.type} onMouseEnter={()=>handleMouseEnter(item.type)} onMouseLeave={()=>handleMouseLeave(item.type)}>
-             <img src={selectedThird===item.type? `../imgs/${item.iconUrlSelected}.png`:`../imgs/${item.iconUrl}.png`} alt="" style={item.iconStyle}/>
-           </div>)
-          })}
-        </SpaceBetween>
-        <div style={{paddingTop:15, textAlign:'right'}}>
-          <span style={{color: 'rgb(128, 128, 128)'}}>{t('auth:youCanAlso')}&nbsp;&nbsp;</span>
-          <Link onFollow={toRegister}>{t('auth:loginWithMidway')}</Link>
+          <Tabs
+            onChange={({ detail }) =>
+              setActiveTabId(detail.activeTabId)
+            }
+            activeTabId={activeTabId}
+            tabs={tabs}
+          />
+          <div className='bottom-setting'>
+            <Grid
+              gridDefinition={[{ colspan: 4 },{ colspan: 8 }]}
+            >
+              <div>
+                <Checkbox
+                  onChange={({ detail }) =>
+                    setKeep(detail.checked)
+                  }
+                  checked={keep}
+                >
+                  <span className='keep'>{t('auth:keepLogin')}</span>
+                </Checkbox>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <Link onFollow={forgetPwd} >{t('auth:forgetPWD')}</Link>&nbsp;&nbsp;&nbsp;<Link onFollow={toRegister} >{t('auth:register')}</Link>
+              </div>
+            </Grid>
+          </div>
+          <div className='bottom-button'>
+            <Button variant="primary" className='login-buttom' loading={logging} onClick={loginSystem}>{t('auth:login')}</Button>
+          </div>
+          <div style={{display:'none'}}>{selectedProviderName}</div>
+          <div style={{color: 'rgb(128, 128, 128)', fontSize: 14,marginTop: 30, width:'90%'}}>
+            {(thirdLogin && thirdLogin.length>0)?(
+              <Grid gridDefinition={[{colspan:6},{colspan:6}]}>
+                <SpaceBetween direction='horizontal' size='s'>
+                  {thirdLogin.map(item=>{
+                    return (<div key={item.type} onMouseEnter={()=>handleMouseEnter(item.type)} onMouseLeave={()=>handleMouseLeave(item.type)}>
+                              <img src={selectedThird===item.type? `../imgs/${item.iconUrlSelected}.png`:`../imgs/${item.iconUrl}.png`} alt="" style={item.iconStyle}/>
+                            </div>)
+                    }
+                  )}
+                </SpaceBetween>
+                <div style={{paddingTop:15, textAlign:'right'}}>
+                  <span style={{color: 'rgb(128, 128, 128)'}}>{t('auth:youCanAlso')}&nbsp;&nbsp;</span>
+                  <Link onFollow={toRegister}>{t('auth:loginWithMidway')}</Link>
+                </div>
+              </Grid>):(
+              <Grid gridDefinition={[{colspan:12}]}>
+                <div style={{paddingTop:5, textAlign:'center'}}>
+                  <span style={{color: 'rgb(128, 128, 128)'}}>{t('auth:youCanAlso')}&nbsp;&nbsp;</span>
+                  <Link onFollow={toRegister}>{t('loginWithMidway')}</Link>
+                </div>
+                <div style={{display:"none"}}>{version}</div>
+              </Grid>)
+            }
+          </div>
         </div>
-      </Grid>):(<Grid gridDefinition={[{colspan:12}]}>
-        <div style={{paddingTop:5, textAlign:'center'}}>
-          <span style={{color: 'rgb(128, 128, 128)'}}>{t('auth:youCanAlso')}&nbsp;&nbsp;</span>
-          <Link onFollow={toRegister}>{t('loginWithMidway')}</Link>
-        </div>
-        <div style={{display:"none"}}>{version}</div>
-      </Grid>)}
-      
-      
-    </div>
-    
-    </div>
-    
       </div>
-      {/* <div style={{textAlign:'right',fontWeight:800,height:16}}>
-      
-        <Alert
-        statusIconAriaLabel="Info"
-      >
-        All login type use "demo" as both the username and password.
-      </Alert>
-      
-      </div> */}
       <div style={{marginTop:30,textAlign:'right',fontWeight:800,height:16}}>
       {(error!==""&& error!==null)&&(
         <Alert
