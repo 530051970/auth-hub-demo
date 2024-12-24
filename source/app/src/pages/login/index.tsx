@@ -24,7 +24,7 @@ const Login: FC = () => {
   const [config, setConfig]=useState(null as any);
   const [selectedProvider, setSelectedProvider] = useState(null as any);
   const [selectedProviderName, setSelectedProviderName] = useState(null as any);
-  const [selectedThird, setSelectedThird]  = useState("" as string);
+  // const [selectedThird, setSelectedThird]  = useState("" as string);
   const [tabs, setTabs] = useState([] as any[]);
   const [thirdLogin, setThirdLogin] = useState([] as any[]);
   const [projectName, setProjectName] = useState("" as string)
@@ -56,7 +56,7 @@ const Login: FC = () => {
 
   useEffect(()=>{
       updateEnv(config)
-  },[config, selectedProvider, username, password, lang])
+  },[config, username, password, lang, selectedProvider])
 
   const updateEnv = (config: any)=>{
     setIsloading(true)
@@ -110,7 +110,7 @@ const Login: FC = () => {
           }
           oidcOptions.push({
             label: item.label,
-            iconUrl:`../../imgs/${item.name}.png`,
+            iconUrl:`imgs/${item.name}.png`,
             value: item.name,
             clientId: item.clientId,
             clientSecret: item.clientSecret,
@@ -140,7 +140,7 @@ const Login: FC = () => {
           id: "oidc",
           disabled: config.login.oidc.disabled || false,
           content: (<OIDC
-            provider= {selectedProvider}
+            provider= {selectedProvider||oidcOptions[0]}
             username={username}
             password={password}
             oidcOptions={oidcOptions}
@@ -148,6 +148,7 @@ const Login: FC = () => {
             setProvider={setSelectedProvider}
             setUsername={setUsername}
             setPassword={setPassword}
+            setError={setError}
           />)
         })
       }
@@ -164,7 +165,6 @@ const Login: FC = () => {
     if(lang===EN_LANG){
       setLang(ZH_LANG)
       i18n.changeLanguage(ZH_LANG);
-      // setIsloading(false)
     } else {
       setLang(EN_LANG)
       i18n.changeLanguage(EN_LANG);
@@ -175,20 +175,13 @@ const Login: FC = () => {
     navigate(ROUTES.FindPWD)
   }
 
-  const handleMouseEnter =(target: string)=>{
-    setSelectedThird(target)
-  }
-
-  const handleMouseLeave =(target: string)=>{
-    setSelectedThird("")
-  }
-
   const toRegister =()=>{
     navigate(ROUTES.Register)
   }
 
   const loginSystem = () => {
     const ver = version
+    setError("")
     setLogging(true)
     if(activeTabId === LOGIN_TYPE.OIDC && selectedProvider == null){
       setError("provideId is required")
@@ -197,13 +190,13 @@ const Login: FC = () => {
       return;
     }
     if(username == null || username === ''){
-      setError("username is required")
+      setError(t('auth:error.username').toString())
       setVersion(ver + 1)
       setLogging(false)
       return;
     }
     if(password == null || password === ''){
-      setError("password is required")
+      setError(t('auth:error.username').toString())
       setVersion(ver + 1)
       setLogging(false)
       return;
@@ -325,46 +318,21 @@ const Login: FC = () => {
               </div>
             </Grid>
           </div>
-          <div className='bottom-button'>
-            <Button variant="primary" className='login-buttom' loading={logging} onClick={loginSystem}>{t('auth:login')}</Button>
+          <div className='button-group'>
+            <Button variant="primary" className='login' loading={logging} onClick={loginSystem}>{t('auth:login')}</Button>
+            <Grid gridDefinition={[ { colspan: 5 },{ colspan: 2 },{ colspan: 5 } ]}>
+              <div style={{marginTop: 20, borderBottom: '1px solid #ccc'}}></div>
+              <div style={{textAlign:"center",paddingTop:8, color:"#ccc"}}>{t('auth:or')}</div>
+              <div style={{marginTop: 20, borderBottom: '1px solid #ccc'}}></div>
+            </Grid>
+            <div style={{marginTop: 12}}>
+              <Button className='login' onClick={loginSystem} disabled>{t('auth:sso')}</Button>
+            </div>
+            <div style={{marginTop:10,textAlign:'right',color:'red',fontWeight:800,height:16}}>{error}</div>
+            {/* <div style={{height:20, marginTop: 16, color:"#d93a7f7a", fontWeight:"bold", fontSize:12}}>{(error!==""&& error!==null)?(<><span style={{fontWeight: 800}}>·</span>&nbsp;{error}</>):""}</div> */}
           </div>
           <div style={{display:'none'}}>{selectedProviderName}</div>
-          <div style={{color: 'rgb(128, 128, 128)', fontSize: 14,marginTop: 30, width:'90%'}}>
-            {(thirdLogin && thirdLogin.length>0)?(
-              <Grid gridDefinition={[{colspan:6},{colspan:6}]}>
-                <SpaceBetween direction='horizontal' size='s'>
-                  {thirdLogin.map(item=>{
-                    return (<div key={item.type} onMouseEnter={()=>handleMouseEnter(item.type)} onMouseLeave={()=>handleMouseLeave(item.type)}>
-                              <img src={selectedThird===item.type? `../imgs/${item.iconUrlSelected}.png`:`../imgs/${item.iconUrl}.png`} alt="" style={item.iconStyle}/>
-                            </div>)
-                    }
-                  )}
-                </SpaceBetween>
-                <div style={{paddingTop:15, textAlign:'right'}}>
-                  <span style={{color: 'rgb(128, 128, 128)'}}>{t('auth:youCanAlso')}&nbsp;&nbsp;</span>
-                  <Link onFollow={toRegister}>{t('auth:loginWithMidway')}</Link>
-                </div>
-              </Grid>):(
-              <Grid gridDefinition={[{colspan:12}]}>
-                <div style={{paddingTop:5, textAlign:'center'}}>
-                  <span style={{color: 'rgb(128, 128, 128)'}}>{t('auth:youCanAlso')}&nbsp;&nbsp;</span>
-                  <Link onFollow={toRegister}>{t('loginWithMidway')}</Link>
-                </div>
-                <div style={{display:"none"}}>{version}</div>
-              </Grid>)
-            }
-          </div>
         </div>
-      </div>
-      <div style={{marginTop:30,textAlign:'right',fontWeight:800,height:16}}>
-      {(error!==""&& error!==null)&&(
-        <Alert
-        statusIconAriaLabel="Error"
-        type="error"
-      >
-        {error}
-      </Alert>
-      )}
       </div>
       </SpaceBetween> 
     </div>)

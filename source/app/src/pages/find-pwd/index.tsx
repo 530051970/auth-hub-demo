@@ -178,7 +178,7 @@ const FindPWD: FC = () => {
                   <div className='item'>
                     <Select
                       placeholder={t('auth:findPWD.oidcPlaceholder').toString()}
-                      selectedOption={oidcProvider}
+                      selectedOption={oidcProvider||oidcOptions[0]}
                       onChange={({ detail }:{detail: any}) =>
                         setOidcProvider(detail.selectedOption)
                       }
@@ -202,8 +202,8 @@ const FindPWD: FC = () => {
               </>))}
           </div>
         </div>
-        <div className='bottom-button'>
-          <Button variant="primary" className='login-buttom' onClick={()=>{sendEmail()}}>{t('auth:findPWD.send')}</Button>
+        <div className='button-group'>
+          <Button variant="primary" className='send-email' onClick={()=>{sendEmail()}}>{t('auth:findPWD.send')}</Button>
         </div>
         <div style={{color: 'rgb(128, 128, 128)', fontSize: 14,marginTop: 30, width:'90%'}}>
           {(thirdLogin && thirdLogin.length>0)?(

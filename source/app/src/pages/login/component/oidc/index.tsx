@@ -12,7 +12,8 @@ interface OIDCProps {
     setProvider: Function,
     setUsername: Function,
     setPassword: Function,
-    setSelectedProviderName: Function
+    setSelectedProviderName: Function,
+    setError: Function
 }
 const OIDC = (props: OIDCProps) => {
     const { t } = useTranslation();
@@ -23,45 +24,50 @@ const OIDC = (props: OIDCProps) => {
            setProvider,
            setUsername,
            setPassword,
-           setSelectedProviderName
+           setSelectedProviderName,
+           setError
            } = props
     const context = useContext(ConfigContext);
     const updateContext =(oidcContent: any)=>{
       context?.updateOIDC(oidcContent)
     }
-
-    useEffect(()=>{
-      console.log(`oidcOptions is ${oidcOptions}`)
-    },[])
     
-    return (<div className='oidc'>
+    return (
+      <div className='oidc'>
         <div className='item'>
           <Select
             placeholder={t('auth:chooseOIDC').toString()}
             selectedOption={provider}
             onChange={({ detail }:{detail: any}) => {
+               setError('')
                updateContext(detail.selectedOption)
                setProvider(detail.selectedOption)
                setSelectedProviderName(detail.selectedOption.value)
               }
             }
             options={oidcOptions}
-    />
-         </div>
-        <div className='item'>
-        <Input
-      onChange={({ detail }) => setUsername(detail.value)}
-      value={username}
-      placeholder={t('auth:inputUsername').toString()}
-    />
+          />
         </div>
         <div className='item'>
-        <Input
-        type='password'
-      onChange={({ detail }) => setPassword(detail.value)}
-      value={password}
-      placeholder={t('auth:inputPassword').toString()}
-    />
+          <Input
+            onChange={({ detail }) => {
+              setError('');
+              setUsername(detail.value)}
+            }
+            value={username}
+            placeholder={t('auth:inputUsername').toString()}
+          />
+        </div>
+        <div className='item'>
+          <Input
+            type='password'
+            onChange={({ detail }) => {
+              setError('');
+              setPassword(detail.value)}
+            }
+            value={password}
+            placeholder={t('auth:inputPassword').toString()}
+          />
         </div>    
     </div>)
 }
