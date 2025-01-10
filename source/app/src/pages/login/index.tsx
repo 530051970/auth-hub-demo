@@ -1,6 +1,6 @@
 import { Button, Checkbox, Grid, Link, SpaceBetween, Spinner, Tabs } from '@cloudscape-design/components';
 import { Hub } from "aws-amplify/utils";
-import { signInWithRedirect, fetchUserAttributes, fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
+import { signInWithRedirect, fetchUserAttributes, fetchAuthSession } from "aws-amplify/auth";
 import { LOGIN_TYPE } from 'enum/common_types';
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -153,10 +153,6 @@ const Login: FC = () => {
           />)
         })
       }
-      // if(config.login.third && config.login.third.length > 0){
-      //   tmp_third_login = config.login.third
-      //   setThirdLogin(tmp_third_login)
-      // }
       setTabs(tmp_tabs)
       setIsloading(false)
     }
@@ -219,18 +215,14 @@ const Login: FC = () => {
   const midway = async () =>{
     try {
       await signInWithRedirect({
-        provider: {
-          custom: "auth-hub-midway"
+        provider:{
+          custom: "s2igOIDCProvider"
         }
-      });
-    } catch (error) {
+        })
+    } catch (error){
       if ((error as { name: string }).name === 'UserAlreadyAuthenticatedException') {
         console.warn('User already signed in. Fetching user info...');
-        try {
-          postMidwayLogin(navigate);
-        } catch (fetchError) {
-          console.error('Failed to fetch current user:', fetchError);
-        }
+        await processForUserAlreadySignin(navigate);  
       } else {
         console.error('Error during sign in:', error);
       }
@@ -346,7 +338,7 @@ const postMidwayLogin = (navigate) => {
   const fetchUserDetails = async () => {
     const currentUser = await fetchUserAttributes();
     localStorage.setItem(USER, currentUser.email?.split('@')[0] || currentUser.username || currentUser.name || "");
-    // navigate(ROUTES.Home);
+    navigate(ROUTES.Home);
   };
   const fetchCurrentSession = async () => {
     const currentSession = await fetchAuthSession();
@@ -358,18 +350,16 @@ const postMidwayLogin = (navigate) => {
   navigate(ROUTES.Home);
 }
 
-// const postMidwayLoginRetry = (navigate) => {
-//   const fetchUserDetails = async () => {
-//     const currentUser = await getCurrentUser();
-//     localStorage.setItem(USER, currentUser);
-//     navigate(ROUTES.Home);
-//   };
-//   const fetchCurrentSession = async () => {
-//     const currentSession = await fetchAuthSession();
-//     localStorage.setItem(TOKEN, JSON.stringify({ access_token: currentSession.tokens?.accessToken.toString(), id_token: currentSession.tokens?.idToken?.toString() }));
-//   };
-//   fetchUserDetails();
-//   fetchCurrentSession();
-//   localStorage.setItem(OIDC_STORAGE, "midway");
-//   navigate(ROUTES.Home);
-// }
+
+const processForUserAlreadySignin = async(navigate) => {
+  try {
+    const currentUser = await fetchUserAttributes();
+    const currentSession = await fetchAuthSession();
+    localStorage.setItem(OIDC_STORAGE, "midway");
+    localStorage.setItem(USER, currentUser.email?.split('@')[0] || currentUser.username || currentUser.name || "");
+    localStorage.setItem(TOKEN, JSON.stringify({ access_token: currentSession.tokens?.accessToken.toString(), id_token: currentSession.tokens?.idToken?.toString() }));
+    navigate(ROUTES.Home);
+  } catch (fetchError) {
+    console.error('Failed to fetch current user:', fetchError);
+  }
+}
