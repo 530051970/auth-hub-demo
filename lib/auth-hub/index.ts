@@ -22,7 +22,6 @@ import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from '
 import { AWSError, CognitoIdentityServiceProvider } from 'aws-sdk';
 import { Construct } from 'constructs';
 import path = require('path');
-import { BUILTIN_COGNITO_PWD } from '../constant';
 
 export interface AuthHubProps {
   readonly solutionName: string;
@@ -42,97 +41,6 @@ export interface AuthHubProps {
         super(scope, id);
         const {solutionName, stage} = props;
         const randomTag = `random-${Math.random().toString(36).substr(2, 5)}`;
-        const cognitoParameter = new CfnParameter(scope, 'cognito', {
-          type: 'String', 
-          allowedValues: ['true', 'false'], 
-          default: 'true',
-          description: 'Whether to create Cognito User Pool or not',
-        });
-
-        const enableCognito = new CfnCondition(this, 'NoPrivateSubnet', { expression: Fn.conditionEquals(cognitoParameter, 'true')});
-        const userPool = new UserPool(scope, `${new Date().toISOString()}UserPool`, {
-            selfSignUpEnabled: true,
-            signInAliases: { username: true },
-            autoVerify: { email: false }, 
-            passwordPolicy: {
-              requireDigits: false,
-              requireLowercase: false,
-              requireSymbols: false,
-              requireUppercase: false,
-              minLength: 6,
-            },
-          });
-        const userPoolResource = userPool.node.defaultChild as CfnUserPool;
-        userPoolResource.cfnOptions.condition = enableCognito
-        const domainPrefix = `demo-authing${randomTag}`
-        const userPoolDomain = new UserPoolDomain(this, 'OidcUserPoolDomain', {
-          userPool,
-          cognitoDomain: {
-            domainPrefix: `demo-authing${randomTag}`, 
-          },
-        });
-        const userPoolClient = new UserPoolClient(this, 'OidcUserPoolClient', {
-          userPool,
-          generateSecret: false,
-          authFlows: {
-            userPassword: true,
-            adminUserPassword: true,
-            custom: true
-          },
-          oAuth: {
-            flows: {
-              authorizationCodeGrant: true
-            },
-            scopes: [
-              OAuthScope.OPENID, 
-              OAuthScope.EMAIL,
-              OAuthScope.PROFILE,
-            ],
-            callbackUrls: [`https://${domainPrefix}.auth.${props.region}.amazoncognito.com/callback`], 
-            logoutUrls: [`https://${domainPrefix}.auth.${props.region}.amazoncognito.com/logout`],
-          },
-        });
-
-        
-
-        (userPoolClient.node.defaultChild as CfnUserPool).cfnOptions.condition = enableCognito
-
-        const username= 'demo'
-        const defaultUser = new CfnUserPoolUser(this, `${randomTag}-UserPoolUser`, {
-          userPoolId: userPool.userPoolId,
-          username,
-          messageAction: 'SUPPRESS',
-          userAttributes: [
-            { name: 'email', value: 'dummy@amazon.com' }
-          ],
-        });
-        defaultUser.cfnOptions.condition = enableCognito
-        
-        const passwordParams = {
-          UserPoolId: userPool.userPoolId,
-          Username: username,
-          Permanent: true,
-          Password: BUILTIN_COGNITO_PWD,
-        };
-    
-        const demoUserPassword = new AwsCustomResource(this, 'demoUserPassword', {
-          onCreate: {
-            service: 'CognitoIdentityServiceProvider',
-            action: 'adminSetUserPassword',
-            parameters: passwordParams,
-            physicalResourceId: PhysicalResourceId.of(`demoUserPasswordCreate-${randomTag}`),
-          },
-          onUpdate: {
-            service: 'CognitoIdentityServiceProvider',
-            action: 'adminSetUserPassword',
-            parameters: passwordParams,
-            physicalResourceId: PhysicalResourceId.of(`demoUserPasswordUpdate-${randomTag}`),
-          },
-          policy: AwsCustomResourcePolicy.fromSdkCalls({ resources: AwsCustomResourcePolicy.ANY_RESOURCE }),
-          installLatestAwsSdk: false,
-        });
-    
-        demoUserPassword.node.addDependency(defaultUser);
         const authLayer = new LayerVersion(
           this,
           "APILambdaAuthLayer",
@@ -161,12 +69,12 @@ export interface AuthHubProps {
           handler: 'auth_api.handler',
           memorySize: 4096,
           timeout: Duration.seconds(10),
-          environment: {
-            cognito_client_id: userPoolClient?.userPoolClientId,
-            user_pool_id: userPool?.userPoolId,
-            cognito_domain: userPoolDomain.domainName,
-            region: props.region
-          }, 
+          // environment: {
+          //   cognito_client_id: userPoolClient?.userPoolClientId,
+          //   user_pool_id: userPool?.userPoolId,
+          //   cognito_domain: userPoolDomain.domainName,
+          //   region: props.region
+          // }, 
           layers: [authLayer]
         });
 
@@ -204,18 +112,6 @@ export interface AuthHubProps {
             metricsEnabled: true
           }
         });
-
-        new CfnOutput(this, 'UserPoolId', {
-          value: userPool.userPoolId,
-        });
-
-        new CfnOutput(this, 'UserPoolClientId', {
-          value: userPoolClient.userPoolClientId,
-        });
-
-        new CfnOutput(this, 'UserPoolDomain', {
-          value: `https://${userPoolDomain.domainName}.auth.${props.region}.amazoncognito.com`,
-        });
         const authIntegration = new LambdaIntegration(authFunction)
         const authResource = this.apigw.root.addResource('auth')
         const loginResource = authResource.addResource('login')
@@ -227,15 +123,14 @@ export interface AuthHubProps {
         refreshResource.addMethod('POST', authIntegration);
 
         const configFile = 'auth.json';
-        
-        const configLambda = new AwsCustomResource(this, 'WebConfig', {
+        new AwsCustomResource(this, 'WebConfig', {
           logRetention: RetentionDays.ONE_DAY,
           onUpdate: {
             action: 'putObject',
             parameters: {
               Body: JSON.stringify({
                 api_url: this.apigw.url,
-                built_in_cognito: cognitoParameter.valueAsString
+                app_url: props.url,
               }),
               Bucket: props.portalBucket.bucketName,
               CacheControl: 'max-age=0, no-cache, no-store, must-revalidate',

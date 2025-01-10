@@ -1,14 +1,14 @@
 
 import jwtDecode from 'jwt-decode';
 import apiClient from './client';
+import { signOut } from "aws-amplify/auth";
 import axios from 'axios';
-import { API_URL, OIDC_REDIRECT_URL, OIDC_STORAGE, TOKEN, USER } from 'common/constants';
+import { API_URL, MIDWAY, OIDC_REDIRECT_URL, OIDC_STORAGE, TOKEN, USER } from 'common/constants';
+import { Amplify } from 'aws-amplify';
 
 export const refreshAccessToken = async () => {
   const refreshToken = JSON.parse(localStorage.getItem(TOKEN) || "").refresh_token;
   const oidc = JSON.parse(localStorage.getItem(OIDC_STORAGE) || "")
-  // const provider = localStorage.getItem(PROVIDER);
-  // const clientId = localStorage.getItem(CLIENT_ID)
 
   if (!refreshToken) {
     throw new Error('No refresh token available');
@@ -41,23 +41,45 @@ export const isTokenExpired = (token:string) => {
 
 
 export const logout = () => {
-    const oidc = JSON.parse(localStorage.getItem(OIDC_STORAGE) || "")
-    const redirectUri = oidc.redirect_uri
-    const token = localStorage.getItem(TOKEN)
-    if(!redirectUri || !token) return
-    axios.get(
-        `${redirectUri}/api/v2/logout`,
-        {
-          headers: {
-            'Authorization': `Bearer ${JSON.parse(token).access_token}`
+    const oidc = localStorage.getItem(OIDC_STORAGE) || ""
+    if(oidc === "midway"){
+      Amplify.configure({
+        Auth: { 
+          Cognito: {
+            userPoolId: MIDWAY.USER_POOL_ID,
+            userPoolClientId: MIDWAY.USER_POOL_CLIENT_ID,
+            identityPoolId: process.env.VITE_AWS_IDENTITY_POOL_ID||"",
+            allowGuestAccess: true,
+            loginWith: {
+              oauth: {
+                domain: MIDWAY.AUTH_DOMAIN,
+                scopes: MIDWAY.SCOPES,
+                redirectSignIn: MIDWAY.REDIRECT_SIGNIN,
+                redirectSignOut: MIDWAY.REDIRECT_SIGNOUT,
+                responseType: "code",
+              }
+              }
+            }
           }
-        }
-    );
+        },{ssr: true}
+      )
+      signOut({ global: true })
+    } else {
+      const redirectUri = JSON.parse(oidc).redirect_uri
+      const token = localStorage.getItem(TOKEN)
+      if(!redirectUri || !token) return
+        axios.get(
+          `${redirectUri}/api/v2/logout`,
+          {
+            headers: {
+              'Authorization': `Bearer ${JSON.parse(token).access_token}`
+            }
+          }
+        );
+    }
     localStorage.removeItem(TOKEN);
     localStorage.removeItem(USER);
-    localStorage.removeItem(API_URL);
     localStorage.removeItem(OIDC_STORAGE);
-    // localStorage.removeItem()
     window.location.href='/login';
 };
 

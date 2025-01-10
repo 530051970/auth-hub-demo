@@ -1,4 +1,6 @@
-import { Alert, Button, Checkbox, Grid, Link, SpaceBetween, Spinner, Tabs } from '@cloudscape-design/components';
+import { Button, Checkbox, Grid, Link, SpaceBetween, Spinner, Tabs } from '@cloudscape-design/components';
+import { Hub } from "aws-amplify/utils";
+import { signInWithRedirect, fetchUserAttributes, fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
 import { LOGIN_TYPE } from 'enum/common_types';
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -9,9 +11,10 @@ import User from './component/user';
 import './style.scss';
 import axios, { AxiosError } from 'axios';
 import apiClient from 'request/client';
-import { BUILTIN_COGNITO, EN_LANG, OIDC_STORAGE, ROUTES, TOKEN, USER_DETAIL, ZH_LANG, ZH_LANGUAGE_LIST } from 'common/constants';
+import { EN_LANG, OIDC_STORAGE, ROUTES, TOKEN, USER, ZH_LANG, ZH_LANGUAGE_LIST } from 'common/constants';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+
 
 const Login: FC = () => {
   const [activeTabId, setActiveTabId] = useState(LOGIN_TYPE.OIDC);
@@ -24,16 +27,15 @@ const Login: FC = () => {
   const [config, setConfig]=useState(null as any);
   const [selectedProvider, setSelectedProvider] = useState(null as any);
   const [selectedProviderName, setSelectedProviderName] = useState(null as any);
-  // const [selectedThird, setSelectedThird]  = useState("" as string);
   const [tabs, setTabs] = useState([] as any[]);
-  const [thirdLogin, setThirdLogin] = useState([] as any[]);
   const [projectName, setProjectName] = useState("" as string)
   const [author, setAuthor] = useState("" as string)
   const [version, setVersion] = useState(0)
   const { t, i18n } = useTranslation();
   const [lang, setLang]= useState('')
   const [isLoading, setIsloading] = useState(true as boolean)
-  const [customizeCognito, setCustomizeCognito]  = useState(false)
+  const [oidcList, setOidcList] = useState([] as any[])
+  const oidcOptions:any[] =[]
 
   useEffect(()=>{
     if (ZH_LANGUAGE_LIST.includes(i18n.language)) {
@@ -52,7 +54,22 @@ const Login: FC = () => {
       setConfig(configData)
     })
     setError("")
-  },[])
+  },[i18n])
+
+  useEffect(() => {
+    const listener = (data: any) => {
+      const { payload } = data;
+      if (payload.event === "signInWithRedirect") {
+        console.log("User signed in successfully:", payload.data);
+        setIsloading(true)
+      } else if (payload.event === "signedIn") {
+        console.log("User signed in successfully:", payload.data);
+        postMidwayLogin(navigate)
+      }
+    };
+
+    Hub.listen("auth", listener);
+  }, [navigate]);
 
   useEffect(()=>{
       updateEnv(config)
@@ -62,7 +79,6 @@ const Login: FC = () => {
     setIsloading(true)
     if(config!==null){
       let tmp_tabs: any[] =[]
-      let tmp_third_login: any[] =[]
       setProjectName(config.project)
       setAuthor(config.author)
       if(config.login.user){
@@ -93,8 +109,6 @@ const Login: FC = () => {
       }
       if(config.login.oidc && config.login.oidc.providers.length > 0){
         const tmp_login_params = new Map<string, any>();
-        const oidcOptions:any[] =[]
-        let customizedcognito = false
         config.login.oidc.providers.forEach((item:any)=>{
           let description = ""
           switch (item.name) {
@@ -119,22 +133,9 @@ const Login: FC = () => {
             tags: [description]
           })
           tmp_login_params.set(item.name, item)
-          if(item.name === 'Cognito') {
-            customizedcognito = true
-            setCustomizeCognito(true)
-          }
+          setOidcList(oidcOptions)
         })
-        if(!customizedcognito && localStorage.getItem(BUILTIN_COGNITO)==='true'){
-          const builtinCognito = {
-            label:'Cognito',
-            iconUrl:`../../imgs/cognito.png`,
-            value: 'Cognito',
-            tags: ['Assert built-in user authentication service']
-          }
-          oidcOptions.push(builtinCognito)
-          tmp_login_params.set("cognito", builtinCognito) 
-        }
-
+        
         tmp_tabs.push({
           label: <div style={{width:120, textAlign: 'center'}}>{t('auth:oidc')}</div>,
           id: "oidc",
@@ -152,10 +153,10 @@ const Login: FC = () => {
           />)
         })
       }
-      if(config.login.third && config.login.third.length > 0){
-        tmp_third_login = config.login.third
-        setThirdLogin(tmp_third_login)
-      }
+      // if(config.login.third && config.login.third.length > 0){
+      //   tmp_third_login = config.login.third
+      //   setThirdLogin(tmp_third_login)
+      // }
       setTabs(tmp_tabs)
       setIsloading(false)
     }
@@ -180,14 +181,14 @@ const Login: FC = () => {
   }
 
   const loginSystem = () => {
+    let currentProvider = selectedProvider
     const ver = version
+
     setError("")
     setLogging(true)
-    if(activeTabId === LOGIN_TYPE.OIDC && selectedProvider == null){
-      setError("provideId is required")
-      setVersion(ver + 1)
-      setLogging(false)
-      return;
+    if(activeTabId === LOGIN_TYPE.OIDC && currentProvider == null){
+      setSelectedProvider(oidcList[0])
+      currentProvider = oidcList[0]
     }
     if(username == null || username === ''){
       setError(t('auth:error.username').toString())
@@ -201,30 +202,52 @@ const Login: FC = () => {
       setLogging(false)
       return;
     }
-    oidcLogin()
+    oidcLogin(currentProvider)
+  }
+
+  const ssoLogin =async (ssoType: string) => {
+    setIsloading(true)
+    switch(ssoType){
+      case "midway":
+        await midway()
+        break;
+      default:
+        break;
+    }
+  }
+
+  const midway = async () =>{
+    try {
+      await signInWithRedirect({
+        provider: {
+          custom: "auth-hub-midway"
+        }
+      });
+    } catch (error) {
+      if ((error as { name: string }).name === 'UserAlreadyAuthenticatedException') {
+        console.warn('User already signed in. Fetching user info...');
+        try {
+          postMidwayLogin(navigate);
+        } catch (fetchError) {
+          console.error('Failed to fetch current user:', fetchError);
+        }
+      } else {
+        console.error('Error during sign in:', error);
+      }
+    }
   }
 
   let userInfo: any= {}
-  const oidcLogin = async()=>{
+  const oidcLogin = async(currentProvider: any)=>{
     let response: any
     try{
-      if (selectedProvider.value === "Cognito" && customizeCognito === false){
-        response = await apiClient.post('/auth/login', {
-          builtin_cognito: true,
-          provider: selectedProvider.label.toLowerCase(),
-          username,
-          password
-        })
-      } else {
-        response = await apiClient.post('/auth/login', {
-          builtin_cognito: false,
-          redirect_uri: selectedProvider.redirectUri,
-          client_id: selectedProvider.clientId,
-          provider: selectedProvider.label.toLowerCase(),
-          username,
-          password
-        })
-      }
+      response = await apiClient.post('/auth/login', {
+        redirect_uri: currentProvider.redirectUri,
+        client_id: currentProvider.clientId,
+        provider: currentProvider.label.toLowerCase(),
+        username,
+        password
+      })
     } catch (error){
       if(error instanceof AxiosError) {
         let detail = error.response?.data.detail
@@ -233,49 +256,27 @@ const Login: FC = () => {
           setError(detail.error_description)
         }
       } else {
-        setError("Unknown error, please contact the administrator.")
+        setError(t('auth:unknownError').toString())
       }
       setLogging(false)
       return
     }
     localStorage.setItem(OIDC_STORAGE, JSON.stringify({
-      provider: selectedProvider.label,
-      client_id: selectedProvider.clientId,
-      redirect_uri: selectedProvider.redirectUri
+      provider: currentProvider.label,
+      client_id: currentProvider.clientId,
+      redirect_uri: currentProvider.redirectUri
     }))
     console.log(response.data.body.access_token || response.data.body.AuthenticationResult)
 
-    if(customizeCognito){
-      userInfo = await axios.get(
-        `${selectedProvider.redirectUri}/oidc/me`,
-        {
-          headers: {
-            'Authorization': `Bearer ${response.data.body.access_token}`
-          }
+    userInfo = await axios.get(
+      `${currentProvider.redirectUri}/oidc/me`,
+      {
+        headers: {
+          'Authorization': `Bearer ${response.data.body.access_token}`
         }
-      );
-      localStorage.setItem(TOKEN, JSON.stringify(response.data.body));
-      localStorage.setItem(USER_DETAIL, JSON.stringify(userInfo.data));
-    } else {
-      userInfo = await axios.get(
-        `${selectedProvider.redirectUri}/oidc/me`,
-        {
-          headers: {
-            'Authorization': `Bearer ${response.data.body.access_token}`
-          }
-        }
-      );
-      const authResult = response.data.body.AuthenticationResult || response.data.body
-      localStorage.setItem(TOKEN, JSON.stringify({
-        access_token: authResult?.AccessToken|| authResult?.access_token,
-        expires_in : authResult?.ExpiresIn|| authResult?.expires_in,
-        id_token: authResult?.IdToken|| authResult?.id_token,
-        refresh_token: authResult?.RefreshToken|| authResult?.refresh_token,
-        scope: "openid profile",
-        token_type: authResult?.TokenType|| authResult?.token_type
-      }));
-      localStorage.setItem(USER_DETAIL, JSON.stringify(userInfo.data))  
-    }
+      });
+    localStorage.setItem(TOKEN, JSON.stringify(response.data.body));
+    localStorage.setItem(USER, userInfo.data.email||userInfo.data.name ||userInfo.data.userId);
     navigate(ROUTES.Home)
     if(isLoading){
       return (
@@ -285,7 +286,7 @@ const Login: FC = () => {
   }
   
   return (
-    isLoading?(<div style={{paddingTop:"40%", paddingLeft:"45%"}}><Spinner size="large" /></div>):(
+    isLoading?(<div style={{paddingTop:"20%", paddingLeft:"50%"}}><Spinner size="large" /></div>):(
     <div className="login-div">
       <SpaceBetween direction='vertical' size='m'>  
       <div className='container'>
@@ -326,9 +327,9 @@ const Login: FC = () => {
               <div style={{marginTop: 20, borderBottom: '1px solid #ccc'}}></div>
             </Grid>
             <div style={{marginTop: 12}}>
-              <Button className='login' onClick={loginSystem} disabled>{t('auth:sso')}</Button>
+              <Button className='login' onClick={()=>ssoLogin("midway")}>{t('auth:sso')}</Button>
             </div>
-            <div style={{marginTop:10,textAlign:'right',color:'red',fontWeight:800,height:16}}>{error}</div>
+            <div style={{marginTop:30,textAlign:'right',color:'red',fontWeight:800,height:16}}>{error}</div>
             {/* <div style={{height:20, marginTop: 16, color:"#d93a7f7a", fontWeight:"bold", fontSize:12}}>{(error!==""&& error!==null)?(<><span style={{fontWeight: 800}}>·</span>&nbsp;{error}</>):""}</div> */}
           </div>
           <div style={{display:'none'}}>{selectedProviderName}</div>
@@ -340,3 +341,35 @@ const Login: FC = () => {
 };
 
 export default Login;
+
+const postMidwayLogin = (navigate) => {
+  const fetchUserDetails = async () => {
+    const currentUser = await fetchUserAttributes();
+    localStorage.setItem(USER, currentUser.email?.split('@')[0] || currentUser.username || currentUser.name || "");
+    // navigate(ROUTES.Home);
+  };
+  const fetchCurrentSession = async () => {
+    const currentSession = await fetchAuthSession();
+    localStorage.setItem(TOKEN, JSON.stringify({ access_token: currentSession.tokens?.accessToken.toString(), id_token: currentSession.tokens?.idToken?.toString() }));
+  };
+  fetchUserDetails();
+  fetchCurrentSession();
+  localStorage.setItem(OIDC_STORAGE, "midway");
+  navigate(ROUTES.Home);
+}
+
+// const postMidwayLoginRetry = (navigate) => {
+//   const fetchUserDetails = async () => {
+//     const currentUser = await getCurrentUser();
+//     localStorage.setItem(USER, currentUser);
+//     navigate(ROUTES.Home);
+//   };
+//   const fetchCurrentSession = async () => {
+//     const currentSession = await fetchAuthSession();
+//     localStorage.setItem(TOKEN, JSON.stringify({ access_token: currentSession.tokens?.accessToken.toString(), id_token: currentSession.tokens?.idToken?.toString() }));
+//   };
+//   fetchUserDetails();
+//   fetchCurrentSession();
+//   localStorage.setItem(OIDC_STORAGE, "midway");
+//   navigate(ROUTES.Home);
+// }

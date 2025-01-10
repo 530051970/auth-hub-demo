@@ -27,7 +27,6 @@ class LoginRequest(BaseModel):
     provider: str
     client_id: str = ''
     redirect_uri: str = ''
-    builtin_cognito: bool
 
 class RefreshRequest(BaseModel):
     provider: str
@@ -52,11 +51,7 @@ async def root():
 
 @authApp.post("/auth/login")
 async def login(request: LoginRequest):
-    response = None
-    if request.builtin_cognito:
-        return __builtin_cognito_login(request)
-    else:
-        return __custom_oidc_login(request)
+    return __custom_oidc_login(request)
 
 @authApp.get("/auth/token/verify")
 async def verify_token_main(request: Request, vRequest: VerifyRequest):
@@ -102,18 +97,6 @@ async def verify_token_main(request: RefreshRequest):
         raise HTTPException(status_code=response.status_code, detail=response.text)
 
 handler = Mangum(authApp)
-
-def __builtin_cognito_login(request: LoginRequest):
-    try:
-        response = get_token_buitin_cognito(os.getenv("cognito_client_id"), request.username, request.password, os.getenv('region'))
-        return __gen_response_with_status_code(200, response)
-    except Exception as e:
-        detail = {
-            "error": "invalid_grant",
-            "error_description": str(e).split(":")[1]
-        }
-        raise HTTPException(status_code=401, detail=detail)
-
 
 def __custom_oidc_login(request):
     client_config = __get_client_config(request.provider, request.client_id)
