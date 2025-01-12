@@ -14,6 +14,7 @@ import apiClient from 'request/client';
 import { EN_LANG, OIDC_STORAGE, ROUTES, TOKEN, USER, ZH_LANG, ZH_LANGUAGE_LIST } from 'common/constants';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Amplify } from 'aws-amplify';
 
 
 const Login: FC = () => {
@@ -51,9 +52,11 @@ const Login: FC = () => {
       return yaml.parse(data);
     }
     loadConfig().then(configData =>{
+      // console.log("=======::::::>>>>>"+configData)
       setConfig(configData)
     })
     setError("")
+    
   },[i18n])
 
   useEffect(() => {
@@ -65,6 +68,10 @@ const Login: FC = () => {
       } else if (payload.event === "signedIn") {
         console.log("User signed in successfully:", payload.data);
         postMidwayLogin(navigate)
+      } else if (payload.event === 'signOut') {
+        console.log('User signed out');
+      } else if (payload.event === 'tokenRefresh') {
+        console.log('Token refreshed:', payload);
       }
     };
 
@@ -179,7 +186,6 @@ const Login: FC = () => {
   const loginSystem = () => {
     let currentProvider = selectedProvider
     const ver = version
-
     setError("")
     setLogging(true)
     if(activeTabId === LOGIN_TYPE.OIDC && currentProvider == null){
@@ -214,9 +220,30 @@ const Login: FC = () => {
 
   const midway = async () =>{
     try {
+      const midwayConfig = config?.login.sso.midway;
+    Amplify.configure({
+      Auth: { 
+        Cognito: {
+          userPoolId: midwayConfig?.user_pool_id,
+          userPoolClientId: midwayConfig?.user_pool_client_id,
+          identityPoolId: process.env.VITE_AWS_IDENTITY_POOL_ID||"",
+          allowGuestAccess: true,
+          loginWith: {
+            oauth: {
+              domain: midwayConfig?.auth.domain,
+              scopes: midwayConfig?.auth.scopes,
+              redirectSignIn: midwayConfig?.auth.redirect_signin,
+              redirectSignOut: midwayConfig?.auth.redirect_signout,
+              responseType: "code",
+            }
+            }
+          }
+        }
+      },{ssr: true}
+    )
       await signInWithRedirect({
         provider:{
-          custom: "s2igOIDCProvider"
+          custom: "auth-hub-midway"
         }
         })
     } catch (error){
@@ -353,8 +380,8 @@ const postMidwayLogin = (navigate) => {
 
 const processForUserAlreadySignin = async(navigate) => {
   try {
-    const currentUser = await fetchUserAttributes();
     const currentSession = await fetchAuthSession();
+    const currentUser = await fetchUserAttributes();
     localStorage.setItem(OIDC_STORAGE, "midway");
     localStorage.setItem(USER, currentUser.email?.split('@')[0] || currentUser.username || currentUser.name || "");
     localStorage.setItem(TOKEN, JSON.stringify({ access_token: currentSession.tokens?.accessToken.toString(), id_token: currentSession.tokens?.idToken?.toString() }));

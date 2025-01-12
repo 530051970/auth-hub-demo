@@ -1,6 +1,5 @@
 import React from 'react';
 export interface CommonInfo {
-   builtInCognito?: string,
    apiUrl?: string,
    user?: any,
    oidc?: any,

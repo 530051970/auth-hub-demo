@@ -13,12 +13,10 @@ login:
     providers:
       - name: "authing"
         label: "Authing"
-        # description: "Authentication service for ensuring application security"
         clientId: "66b769cf5c2d439dfd37f237"
         redirectUri: "https://demo-center.authing.cn"
       - name: "keycloak"
         label: "Keycloak"
-        # description: "Open Source Identity and Access Management"
         clientId: "668d3fa8e264cf3675dcc42a"
         redirectUri: "https://intelli-agent.authing.cn"
         diabled: true
@@ -26,35 +24,23 @@ login:
         label: Cognito
         client_id: 6fsdfdsdddddsadsf434ssd3
         user_pool_id: us-east-1_VeItKBhLQ
-        # client_secret: fasded3442324dfsd8632sddsa
         domain: us-east-1veitkbhlq.auth.us-east-1.amazoncognito.com
         region: us-east-1
   sso:
     midway:
-      - cognito_user_pool_id: us-east-1_VeItKBhLQ
-      - cognito_user_pool_client_id: 4sp7uqbhmd3sos5efhnm9bra2e
-      - cognito_domain: us-east-1veitkbhlq.auth.us-east-1.amazoncognito.com
-      - provider_name: provider
-      # - scopes:
-      #   - openid
-      #   - email
-      #   - profile
-      #   - aws.cognito.signin.user.admin
-      # - redirect_sign_in: ""
-      # - redirect_sign_out: ""
-      # - response_type: code
-
-  # third:
-  #   - type: "google"
-  #     iconUrlSelected: "google_in"
-  #     iconUrl: "google"
-  #     iconStyle: {"width":39,"marginTop":-2}
-  #   - type: "facebook"
-  #     iconUrlSelected: "facebook_in"
-  #     iconUrl: "facebook"
-  #     iconStyle: {"width":34}
-  #   - type: "linkedin"
-  #     iconUrlSelected: "linkedin_in"
-  #     iconUrl: "linkedin"
-  #     iconStyle: {"width":35}
+      user_pool_id: us-east-1_IM5zGhc8w
+      user_pool_client_id: 2m165ontae26nt91gesos569pl
+      auth:
+        domain: us-east-1im5zghc8w.auth.us-east-1.amazoncognito.com
+        scopes:
+          - openid
+          - email
+          - aws.cognito.signin.user.admin
+          - profile
+        redirect_signin:
+          - https://deu59wuttwjgy.cloudfront.net/login
+          - http://localhost:3088/login
+        redirect_signout:
+          - https://deu59wuttwjgy.cloudfront.net
+          - http://localhost:3088
   

@@ -3,7 +3,8 @@ import jwtDecode from 'jwt-decode';
 import apiClient from './client';
 import { signOut } from "aws-amplify/auth";
 import axios from 'axios';
-import { API_URL, MIDWAY, OIDC_REDIRECT_URL, OIDC_STORAGE, TOKEN, USER } from 'common/constants';
+import yaml from 'yaml';
+import { API_URL, OIDC_REDIRECT_URL, OIDC_STORAGE, TOKEN, USER } from 'common/constants';
 import { Amplify } from 'aws-amplify';
 
 export const refreshAccessToken = async () => {
@@ -40,22 +41,26 @@ export const isTokenExpired = (token:string) => {
 };
 
 
-export const logout = () => {
+export const logout = async () => {
     const oidc = localStorage.getItem(OIDC_STORAGE) || ""
     if(oidc === "midway"){
+      let response = await fetch('/config.yaml')
+      let data = await response.text()
+      const config = yaml.parse(data)
+      const midwayConfig = config?.login.sso.midway;
       Amplify.configure({
         Auth: { 
           Cognito: {
-            userPoolId: MIDWAY.USER_POOL_ID,
-            userPoolClientId: MIDWAY.USER_POOL_CLIENT_ID,
+            userPoolId: midwayConfig?.user_pool_id,
+            userPoolClientId: midwayConfig?.user_pool_client_id,
             identityPoolId: process.env.VITE_AWS_IDENTITY_POOL_ID||"",
             allowGuestAccess: true,
             loginWith: {
               oauth: {
-                domain: MIDWAY.AUTH_DOMAIN,
-                scopes: MIDWAY.SCOPES,
-                redirectSignIn: MIDWAY.REDIRECT_SIGNIN,
-                redirectSignOut: MIDWAY.REDIRECT_SIGNOUT,
+                domain: midwayConfig?.auth.domain,
+                scopes: midwayConfig?.auth.scopes,
+                redirectSignIn: midwayConfig?.auth.redirect_signin,
+                redirectSignOut: midwayConfig?.auth.redirect_signout,
                 responseType: "code",
               }
               }

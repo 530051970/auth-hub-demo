@@ -27,18 +27,3 @@ export const ROUTES = {
     LoginCallback: '/signin',
     Home: '/'
   };
-
-
-  // domain: "us-east-1veitkbhlq.auth.us-east-1.amazoncognito.com",
-  // scopes: ["openid", "email","aws.cognito.signin.user.admin", "profile"],
-  // redirectSignIn: ["https://ai-animation.me.industry.gcr.aws.dev/auth-hub/login"],
-  // redirectSignOut: ["https://ai-animation.me.industry.gcr.aws.dev/"],
-export const MIDWAY = {
-  USER_POOL_ID: "us-east-1_IM5zGhc8w",
-  USER_POOL_CLIENT_ID: "2m165ontae26nt91gesos569pl",
-  AUTH_DOMAIN: "us-east-1im5zghc8w.auth.us-east-1.amazoncognito.com",
-  SCOPES: ["openid", "email","aws.cognito.signin.user.admin", "profile"],
-  REDIRECT_SIGNIN: ["https://deu59wuttwjgy.cloudfront.net/login", "http://localhost:3088/login"],
-  REDIRECT_SIGNOUT: ["https://deu59wuttwjgy.cloudfront.net", "http://localhost:3088"],
-    
-}
