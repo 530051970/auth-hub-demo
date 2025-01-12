@@ -243,7 +243,7 @@ const Login: FC = () => {
     )
       await signInWithRedirect({
         provider:{
-          custom: "auth-hub-midway"
+          custom: midwayConfig?.provider
         }
         })
     } catch (error){
