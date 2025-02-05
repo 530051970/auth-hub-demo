@@ -12,6 +12,7 @@ export const LANGUAGE_ITEMS = [
 export const TOKEN = "token"
 export const USER = "user"
 export const API_URL = "api_url"
+export const APP_URL = "app_url"
 export const OIDC_STORAGE = "oidc"
 export const OIDC_REDIRECT_URL = "oidc_uri"
 export const PROVIDER = "provider"

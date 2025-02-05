@@ -4,7 +4,7 @@ import apiClient from './client';
 import { signOut  } from "aws-amplify/auth";
 import axios from 'axios';
 import yaml from 'yaml';
-import { API_URL, OIDC_REDIRECT_URL, OIDC_STORAGE, TOKEN, USER } from 'common/constants';
+import { APP_URL, API_URL, OIDC_REDIRECT_URL, OIDC_STORAGE, TOKEN, USER } from 'common/constants';
 import { Amplify } from 'aws-amplify';
 
 export const refreshAccessToken = async () => {
@@ -48,6 +48,13 @@ export const logout = async () => {
       let data = await response.text()
       const config = yaml.parse(data)
       const midwayConfig = config?.login.sso.midway;
+      const app_url = localStorage.getItem(APP_URL)
+      let signInProd: null | string = null
+      let signOutProd: null | string = null
+      if(app_url){
+        signInProd = `https://${app_url}/login`;
+        signOutProd = `https://${app_url}`
+      }
       Amplify.configure({
         Auth: { 
           Cognito: {
@@ -58,9 +65,9 @@ export const logout = async () => {
             loginWith: {
               oauth: {
                 domain: midwayConfig?.auth.domain,
-                scopes: midwayConfig?.auth.scopes,
-                redirectSignIn: midwayConfig?.auth.redirect_signin,
-                redirectSignOut: midwayConfig?.auth.redirect_signout,
+                scopes: ['aws.cognito.signin.user.admin', 'email', 'openid', 'profile'],
+                redirectSignIn: [midwayConfig?.auth.redirect_signin_local, signInProd],
+                redirectSignOut: [midwayConfig?.auth.redirect_signout_local, signOutProd],
                 responseType: "code",
               }
               }
