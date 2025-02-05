@@ -1,7 +1,7 @@
 
 import jwtDecode from 'jwt-decode';
 import apiClient from './client';
-import { signOut } from "aws-amplify/auth";
+import { signOut  } from "aws-amplify/auth";
 import axios from 'axios';
 import yaml from 'yaml';
 import { API_URL, OIDC_REDIRECT_URL, OIDC_STORAGE, TOKEN, USER } from 'common/constants';
@@ -68,7 +68,7 @@ export const logout = async () => {
           }
         },{ssr: true}
       )
-      signOut({ global: true })
+      await signOut({ global: true })
     } else {
       const redirectUri = JSON.parse(oidc).redirect_uri
       const token = localStorage.getItem(TOKEN)
@@ -105,4 +105,5 @@ export const changePassword = () => {
   localStorage.removeItem(USER);
   localStorage.removeItem(API_URL);
   window.location.href='/login';
+  window.location.reload();
 };

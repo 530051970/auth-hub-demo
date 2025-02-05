@@ -1,6 +1,6 @@
 import { Button, Checkbox, Grid, Link, SpaceBetween, Spinner, Tabs } from '@cloudscape-design/components';
 import { Hub } from "aws-amplify/utils";
-import { signInWithRedirect, fetchUserAttributes, fetchAuthSession } from "aws-amplify/auth";
+import { signInWithRedirect, fetchUserAttributes, fetchAuthSession, signOut } from "aws-amplify/auth";
 import { LOGIN_TYPE } from 'enum/common_types';
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -38,6 +38,33 @@ const Login: FC = () => {
   const [oidcList, setOidcList] = useState([] as any[])
   const oidcOptions:any[] =[]
 
+  useEffect(() => {
+    const listener = (data: any) => {
+      const { payload } = data;
+      if (payload.event === "signInWithRedirect") {
+        console.log("signInWithRedirect:", payload.data);
+      } else if (payload.event === "signedIn") {
+        console.log("User signed in successfully:", payload.data);
+        const fetchUserDetails = async ()=>{
+          const currentUser = await fetchUserAttributes();
+          console.log('Current user:', currentUser);
+          localStorage.setItem(USER, currentUser.email||currentUser.username||currentUser.name||"anonymous user");
+        }
+        const fetchSessionDetails = async ()=>{
+          const currentSession = await fetchAuthSession();
+          localStorage.setItem(TOKEN, JSON.stringify({ access_token: currentSession.tokens?.accessToken.toString(), id_token: currentSession.tokens?.idToken?.toString() }));
+          localStorage.setItem(OIDC_STORAGE, "midway");
+          navigate(ROUTES.Home);
+        }
+        fetchUserDetails();
+        fetchSessionDetails()
+      } else if(payload.event === "signInWithRedirect_failure"){
+        console.log("signInWithRedirect_failure:", payload.data);
+      }
+    };
+    Hub.listen("auth", listener);
+  }, []);
+
   useEffect(()=>{
     if (ZH_LANGUAGE_LIST.includes(i18n.language)) {
       setLang(ZH_LANG)
@@ -52,31 +79,11 @@ const Login: FC = () => {
       return yaml.parse(data);
     }
     loadConfig().then(configData =>{
-      // console.log("=======::::::>>>>>"+configData)
       setConfig(configData)
     })
     setError("")
     
   },[i18n])
-
-  useEffect(() => {
-    const listener = (data: any) => {
-      const { payload } = data;
-      if (payload.event === "signInWithRedirect") {
-        console.log("User signed in successfully:", payload.data);
-        setIsloading(true)
-      } else if (payload.event === "signedIn") {
-        console.log("User signed in successfully:", payload.data);
-        postMidwayLogin(navigate)
-      } else if (payload.event === 'signOut') {
-        console.log('User signed out');
-      } else if (payload.event === 'tokenRefresh') {
-        console.log('Token refreshed:', payload);
-      }
-    };
-
-    Hub.listen("auth", listener);
-  }, [navigate]);
 
   useEffect(()=>{
       updateEnv(config)
@@ -219,8 +226,8 @@ const Login: FC = () => {
   }
 
   const midway = async () =>{
+    const midwayConfig = config?.login.sso.midway;
     try {
-      const midwayConfig = config?.login.sso.midway;
     Amplify.configure({
       Auth: { 
         Cognito: {
@@ -239,9 +246,9 @@ const Login: FC = () => {
             }
           }
         }
-      },{ssr: true}
+      }
     )
-      await signInWithRedirect({
+    await signInWithRedirect({
         provider:{
           custom: midwayConfig?.provider
         }
@@ -249,7 +256,7 @@ const Login: FC = () => {
     } catch (error){
       if ((error as { name: string }).name === 'UserAlreadyAuthenticatedException') {
         console.warn('User already signed in. Fetching user info...');
-        await processForUserAlreadySignin(navigate);  
+        await processForUserAlreadySignin(navigate)
       } else {
         console.error('Error during sign in:', error);
       }
@@ -361,32 +368,24 @@ const Login: FC = () => {
 
 export default Login;
 
-const postMidwayLogin = (navigate) => {
-  const fetchUserDetails = async () => {
-    const currentUser = await fetchUserAttributes();
-    localStorage.setItem(USER, currentUser.email?.split('@')[0] || currentUser.username || currentUser.name || "");
-    navigate(ROUTES.Home);
-  };
-  const fetchCurrentSession = async () => {
-    const currentSession = await fetchAuthSession();
-    localStorage.setItem(TOKEN, JSON.stringify({ access_token: currentSession.tokens?.accessToken.toString(), id_token: currentSession.tokens?.idToken?.toString() }));
-  };
-  fetchUserDetails();
-  fetchCurrentSession();
-  localStorage.setItem(OIDC_STORAGE, "midway");
-  navigate(ROUTES.Home);
-}
-
 
 const processForUserAlreadySignin = async(navigate) => {
+  console.log(">>>>>>>processForUserAlreadySignin");
   try {
+    console.log(">>>>>>>processForUserAlreadySignin11111");
     const currentSession = await fetchAuthSession();
+    console.log(">>>>>>>processForUserAlreadySignin22222");
     const currentUser = await fetchUserAttributes();
     localStorage.setItem(OIDC_STORAGE, "midway");
     localStorage.setItem(USER, currentUser.email?.split('@')[0] || currentUser.username || currentUser.name || "");
     localStorage.setItem(TOKEN, JSON.stringify({ access_token: currentSession.tokens?.accessToken.toString(), id_token: currentSession.tokens?.idToken?.toString() }));
     navigate(ROUTES.Home);
-  } catch (fetchError) {
-    console.error('Failed to fetch current user:', fetchError);
+  } catch (error) {
+    if ((error as { name: string }).name === 'NotAuthorizedException') {
+      await signOut({ global: true });
+      return null;
+    } else {
+      console.error('Failed to fetch current user:', error);
+    }
   }
 }

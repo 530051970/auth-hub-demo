@@ -35,14 +35,14 @@ login:
       auth:
         domain: us-east-1im5zghc8w.auth.us-east-1.amazoncognito.com
         scopes:
-          - openid
-          - email
           - aws.cognito.signin.user.admin
+          - email
+          - openid
           - profile
         redirect_signin:
-          - https://deu59wuttwjgy.cloudfront.net/login
           - http://localhost:3088/login
+          - https://deu59wuttwjgy.cloudfront.net/login
         redirect_signout:
-          - https://deu59wuttwjgy.cloudfront.net
           - http://localhost:3088
+          - https://deu59wuttwjgy.cloudfront.net
   

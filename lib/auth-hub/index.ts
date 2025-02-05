@@ -53,7 +53,14 @@ export interface AuthHubProps {
                   command: [
                     "bash",
                     "-c",
-                    `pip install -r requirements.txt -t /asset-output/python`,
+                    `
+                    echo "Starting bundling...";\
+                    echo "Working directory: $(pwd)";\
+                    ls -l;\
+                    chmod -R 777 /asset-output;\
+                    pip install -r requirements.txt -t /asset-output/python;\
+                    echo "Bundling complete.";
+                    `,
                   ],
                 },
               },
