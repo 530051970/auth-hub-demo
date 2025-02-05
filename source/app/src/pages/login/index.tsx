@@ -1,7 +1,7 @@
 import { Button, Checkbox, Grid, Link, SpaceBetween, Spinner, Tabs } from '@cloudscape-design/components';
 import { Hub } from "aws-amplify/utils";
 import { fetchUserAttributes, fetchAuthSession, signOut, signInWithRedirect } from "aws-amplify/auth";
-import { LOGIN_TYPE } from 'enum/common_types';
+
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import yaml from 'yaml';
@@ -11,7 +11,7 @@ import User from './component/user';
 import './style.scss';
 import axios, { AxiosError } from 'axios';
 import apiClient from 'request/client';
-import { APP_URL, EN_LANG, OIDC_STORAGE, ROUTES, TOKEN, USER, ZH_LANG, ZH_LANGUAGE_LIST } from 'common/constants';
+import { APP_URL, EN_LANG, LOGIN_TYPE, OIDC_STORAGE, ROUTES, TOKEN, USER, ZH_LANG, ZH_LANGUAGE_LIST } from 'common/constants';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Amplify } from 'aws-amplify';

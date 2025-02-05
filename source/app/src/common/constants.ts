@@ -9,6 +9,12 @@ export const LANGUAGE_ITEMS = [
   { id: ZH_LANG, text: ZH_TEXT },
 ];
 
+export const LOGIN_TYPE = {
+  USER: 'user',
+  SNS: 'sns',
+  OIDC: 'oidc',
+};
+
 export const TOKEN = "token"
 export const USER = "user"
 export const API_URL = "api_url"
