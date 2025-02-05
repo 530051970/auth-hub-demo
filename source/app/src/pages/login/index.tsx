@@ -1,6 +1,6 @@
 import { Button, Checkbox, Grid, Link, SpaceBetween, Spinner, Tabs } from '@cloudscape-design/components';
 import { Hub } from "aws-amplify/utils";
-import { fetchUserAttributes, fetchAuthSession, signOut } from "aws-amplify/auth";
+import { fetchUserAttributes, fetchAuthSession, signOut, signInWithRedirect } from "aws-amplify/auth";
 import { LOGIN_TYPE } from 'enum/common_types';
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -255,6 +255,11 @@ const Login: FC = () => {
         }
       }
     )
+    await signInWithRedirect({
+      provider:{
+        custom: midwayConfig?.provider
+      }
+      })
     } catch (error){
       if ((error as { name: string }).name === 'UserAlreadyAuthenticatedException') {
         console.warn('User already signed in. Fetching user info...');

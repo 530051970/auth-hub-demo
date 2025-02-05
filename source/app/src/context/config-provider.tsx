@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ConfigContext, { CommonInfo } from './config-context';
-import { alertMsg } from 'ts/common';
 // import { Constant } from 'common/constants';
 import { API_URL } from 'common/constants';
+import { alertMsg } from 'common/utils';
 
 interface ConfigProviderProps {
   children: React.ReactNode;

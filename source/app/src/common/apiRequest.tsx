@@ -1,8 +1,7 @@
 import Axios from 'axios';
 import { COMMON_ALERT_TYPE } from 'pages/common-alert/types/data_config';
-import { alertMsg } from 'ts/common';
-import { AlertType } from 'ts/common-alert/types';
-import { ApiRequest } from 'ts/tools/types';
+import { alertMsg } from './utils';
+import { AlertType, ApiRequest } from './types';
 
 const STORAGE_BACK_URL = '';
 
