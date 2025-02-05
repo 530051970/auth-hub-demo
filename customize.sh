@@ -28,3 +28,4 @@ sed -i '' "s/auth-hub-demo/${ASSET_PACKAGE_NAME}/g" package.json
 sed -i '' "s/auth-hub-demo/${ASSET_PACKAGE_NAME}/g" package-lock.json
 
 sed -i '' "s/AUTH-HUB DEMO/$(echo "$ASSET_PACKAGE_NAME" | tr '[:lower:]' '[:upper:]')/g" source/app/public/config.yaml
+sed -i '' "s/Auth-hub-demo/$(echo "$ASSET_PACKAGE_NAME" | tr '[:lower:]' '[:upper:]')/g" source/app/public/index.html
