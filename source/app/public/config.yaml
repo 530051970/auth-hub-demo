@@ -1,4 +1,4 @@
-project: AUTH-HUB DEMO
+project: SUPER-API
 version: 0.0.1
 author: IndustryBuilders Team
 login:
@@ -34,15 +34,7 @@ login:
       user_pool_client_id: 2m165ontae26nt91gesos569pl
       auth:
         domain: us-east-1im5zghc8w.auth.us-east-1.amazoncognito.com
-        scopes:
-          - aws.cognito.signin.user.admin
-          - email
-          - openid
-          - profile
-        redirect_signin:
-          - http://localhost:3088/login
-          - https://deu59wuttwjgy.cloudfront.net/login
-        redirect_signout:
-          - http://localhost:3088
-          - https://deu59wuttwjgy.cloudfront.net
+        redirect_signin_local: http://localhost:3088/login
+        redirect_signout_local: http://localhost:3088
+
   

@@ -1,0 +1,14 @@
+{
+  "breadcrumb":{
+    "home": "SuperAPI",
+    "integration": "集成" 
+  },
+  "title": "模型广场",
+  "description": "提供丰富的模型资源，助力您的应用开发, 您也可以集成本地部署或者云端部署的大模型。",
+  "model": "模型",
+  "modelDescription": "列举平台内置的主流商用大模型，如果是本地部署或者云端部署大模型，可以点击左上角添加模型按钮添加。",
+  "provider": "厂商",
+  "nowHave": "目前有",
+  "coverage": "覆盖",
+  "models": "个模型"
+}

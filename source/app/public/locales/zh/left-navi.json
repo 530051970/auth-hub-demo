@@ -1,0 +1,14 @@
+{
+    "title": "SuperAPI",
+    "summary": "总览",
+    "dashboard": "仪表盘",
+    "integration": "接入",
+    "model": "模型广场",
+    "app":"应用",
+    "config-play": "应用配置 & 体验",
+    "analysis": "更多",
+    "log": "日志",
+    "bill": "账单",
+    "limit": "限流"
+}
+    

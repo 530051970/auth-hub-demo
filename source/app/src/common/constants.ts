@@ -9,9 +9,16 @@ export const LANGUAGE_ITEMS = [
   { id: ZH_LANG, text: ZH_TEXT },
 ];
 
+export const LOGIN_TYPE = {
+  USER: 'user',
+  SNS: 'sns',
+  OIDC: 'oidc',
+};
+
 export const TOKEN = "token"
 export const USER = "user"
 export const API_URL = "api_url"
+export const APP_URL = "app_url"
 export const OIDC_STORAGE = "oidc"
 export const OIDC_REDIRECT_URL = "oidc_uri"
 export const PROVIDER = "provider"
@@ -19,11 +26,31 @@ export const CLIENT_ID = "client_id"
 export const REFRESH_TOKEN = "refresh_token"
 export const AUTO_LOGOUT_TIME = 15 * 60 * 1000
 
+export const GIHUB_REPO_LINK =
+  'https://github.com/awslabs/sensitive-data-protection-on-aws';
+
+export const CN_DOC_LINK =
+  'https://awslabs.github.io/sensitive-data-protection-on-aws/zh';
+export const EN_DOC_LINK =
+  'https://awslabs.github.io/sensitive-data-protection-on-aws/en';
+
 export const ROUTES = {
     Login: '/login',
     FindPWD: '/find-password',
     Register: '/create-account',
     ChangePWD: '/change-password',
     LoginCallback: '/signin',
-    Home: '/'
+    Home: '/',
+    Model: '/models',
+    App: '/apps',
+    CreateApp: '/apps/create',
+    Playground: '/playground',
+    Log: '/logs',
+    Bill: '/bill',
+  };
+
+  export const MODEL_TYPE = {
+    LLM: 'user',
+    EMBED: 'sns',
+    RERANK: 'oidc',
   };

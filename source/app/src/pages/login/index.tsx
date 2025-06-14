@@ -1,7 +1,7 @@
 import { Button, Checkbox, Grid, Link, SpaceBetween, Spinner, Tabs } from '@cloudscape-design/components';
 import { Hub } from "aws-amplify/utils";
 import { signInWithRedirect, fetchUserAttributes, fetchAuthSession, signOut } from "aws-amplify/auth";
-import { LOGIN_TYPE } from 'enum/common_types';
+
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import yaml from 'yaml';
@@ -11,7 +11,7 @@ import User from './component/user';
 import './style.scss';
 import axios, { AxiosError } from 'axios';
 import apiClient from 'request/client';
-import { EN_LANG, OIDC_STORAGE, ROUTES, TOKEN, USER, ZH_LANG, ZH_LANGUAGE_LIST } from 'common/constants';
+import { APP_URL, EN_LANG, LOGIN_TYPE, OIDC_STORAGE, ROUTES, TOKEN, USER, ZH_LANG, ZH_LANGUAGE_LIST } from 'common/constants';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Amplify } from 'aws-amplify';
@@ -227,6 +227,13 @@ const Login: FC = () => {
 
   const midway = async () =>{
     const midwayConfig = config?.login.sso.midway;
+    const app_url = localStorage.getItem(APP_URL)
+    let signInProd: null | string = null
+    let signOutProd: null | string = null
+    if(app_url){
+      signInProd = `https://${app_url}/login`;
+      signOutProd = `https://${app_url}`
+    }
     try {
     Amplify.configure({
       Auth: { 
@@ -238,9 +245,9 @@ const Login: FC = () => {
           loginWith: {
             oauth: {
               domain: midwayConfig?.auth.domain,
-              scopes: midwayConfig?.auth.scopes,
-              redirectSignIn: midwayConfig?.auth.redirect_signin,
-              redirectSignOut: midwayConfig?.auth.redirect_signout,
+              scopes: ['aws.cognito.signin.user.admin', 'email', 'openid', 'profile'],
+              redirectSignIn: [midwayConfig?.auth.redirect_signin_local, signInProd],
+              redirectSignOut: [midwayConfig?.auth.redirect_signout_local, signOutProd],
               responseType: "code",
             }
             }
@@ -370,11 +377,8 @@ export default Login;
 
 
 const processForUserAlreadySignin = async(navigate) => {
-  console.log(">>>>>>>processForUserAlreadySignin");
   try {
-    console.log(">>>>>>>processForUserAlreadySignin11111");
     const currentSession = await fetchAuthSession();
-    console.log(">>>>>>>processForUserAlreadySignin22222");
     const currentUser = await fetchUserAttributes();
     localStorage.setItem(OIDC_STORAGE, "midway");
     localStorage.setItem(USER, currentUser.email?.split('@')[0] || currentUser.username || currentUser.name || "");

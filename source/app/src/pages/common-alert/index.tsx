@@ -1,9 +1,10 @@
 import { Alert } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
-import { CommonAlertProps } from 'ts/common-alert/types';
+
 import { COMMON_ALERT_TYPE } from './types/data_config';
 import classnames from 'classnames';
 import './style.scss';
+import { CommonAlertProps } from 'common/types';
 
 const CommonAlert: React.FC = () => {
   const [alertVisible, setAlertVisible] = useState(false);

@@ -19,7 +19,7 @@ import { AuthorizationType, IdentitySource, LambdaIntegration, RequestAuthorizer
 export interface ApiProps {
   readonly bucketName: string;
 }
-export class AuthHubDemoStack extends Stack {
+export class SuperApi extends Stack {
   readonly apiFunction: Function;
   readonly userPool?: UserPool
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -118,7 +118,7 @@ export class AuthHubDemoStack extends Stack {
       stage:'dev',
       region: this.region,
       portalBucket: portalBucket,
-      url: distribution.distributionDomainName
+      distribution: distribution
     });
 
     authHub.node.addDependency(distribution)

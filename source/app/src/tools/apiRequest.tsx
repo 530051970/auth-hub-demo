@@ -1,8 +1,8 @@
 import Axios from 'axios';
+import { AlertType, ApiRequest } from 'common/types';
+import { alertMsg } from 'common/utils';
 import { COMMON_ALERT_TYPE } from 'pages/common-alert/types/data_config';
-import { alertMsg } from 'ts/common';
-import { AlertType } from 'ts/common-alert/types';
-import { ApiRequest } from 'ts/tools/types';
+
 
 const STORAGE_BACK_URL = '';
 
@@ -24,20 +24,7 @@ const NO_ACCESS_CODE = 1003;
  */
 axios.interceptors.request.use(
   (config: any) => {
-    // const configJSONObj: AmplifyConfigType = localStorage.getItem(
-    //   AMPLIFY_CONFIG_JSON
-    // )
-    //   ? JSON.parse(localStorage.getItem(AMPLIFY_CONFIG_JSON) || '')
-    //   : {};
-    // const token =
-    //   process.env.REACT_APP_ENV === 'local' ||
-    //   process.env.REACT_APP_ENV === 'development'
-    //     ? ''
-    //     : User.fromStorageString(
-    //         localStorage.getItem(
-    //           `oidc.user:${configJSONObj.aws_oidc_issuer}:${configJSONObj.aws_oidc_client_id}`
-    //         ) || ''
-    //       )?.id_token;
+
     const token = 
     config.data = JSON.stringify(config.data);
     config.headers = {

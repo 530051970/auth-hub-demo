@@ -1,8 +1,8 @@
 {
-  "name": "auth-hub-demo",
+  "name": "super-api",
   "version": "0.1.0",
   "bin": {
-    "auth-hub-demo": "bin/auth-hub-demo.js"
+    "super-api": "bin/super-api.js"
   },
   "scripts": {
     "build": "tsc",

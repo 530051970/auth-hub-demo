@@ -1,0 +1,14 @@
+{
+  "breadcrumb": {
+    "home": "SuperAPI",
+    "integration": "Integration"
+  },
+  "title": "Model Square",
+  "description": "Offering a wide range of model resources to empower your application development. You can also integrate LLM deployed locally or in the cloud.",
+  "model": "Model",
+  "modelDescription": "List built-in LLMs. For locally deployed or cloud-deployed LLMs, you can click the upper left button to add them.",
+  "provider": "Provider",
+  "nowHave": "Currently available",
+  "coverage": "Coverage",
+  "models": "Models"
+}

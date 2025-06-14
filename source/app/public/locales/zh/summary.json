@@ -1,0 +1,28 @@
+{
+  "breadcrumb":{
+    "home": "SuperAPI",
+    "summary": "概览"
+  },
+  "button":{
+    "viewModels": "浏览模型广场",
+    "configApp": "配置应用 & 体验",
+    "useApi": "使用SuperApi"
+  },
+  "dashboard": "仪表盘",
+  "getStarted": "开始",
+  "step1": "步骤一: 先确认现有的模型库里面是否有应用所需的模型，如果没有，需要先在模型广场页提前接入模型。",
+  "step2": "步骤二: 添加应用，并关联对应的模型，配置日志和监控，最后在页面触发一下模型的调用并确认返回预定的响应。",
+  "step3": "步骤三: 按照指引在项目中调用特定的url，并传入相应参数，就可以调用大模型了，而不用关注模型本身。",
+  "data": "数据",
+  "dataDesc":"  图表中的数值仅供参考，以实际为准",
+  "trafficDesc":"5分钟时间窗统计模型调用情况，不能反映当前时刻的流量",
+  "modelProvider": "模型提供方",
+  "modelType": "模型类型",
+  "integrateApp": "应用集成占比",
+  "hotModel": "热门模型",
+  "traffic": "流量",
+  "modelCnt": "模型数",
+  "providerCnt": "供应商",
+  "appCnt": "应用数",
+  "typeCnt": "类别"
+}

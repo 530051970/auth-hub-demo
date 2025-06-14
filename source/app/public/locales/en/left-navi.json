@@ -1,0 +1,13 @@
+{
+    "title": "SuperAPI",
+    "summary": "Summary",
+    "dashboard": "Dashboard",
+    "integration": "Integration",
+    "model": "Model Square",
+    "app":"Application",
+    "config-play": "Configuration & Playground",
+    "analysis": "More",
+    "log": "Logs",
+    "bill": "Bills",
+    "limit": "Limit"
+}

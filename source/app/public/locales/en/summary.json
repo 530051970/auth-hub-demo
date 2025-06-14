@@ -1,0 +1,28 @@
+{
+  "breadcrumb":{
+    "home": "Home",
+    "summary": "Summary"
+  },
+  "button":{
+    "viewModels": "View Models",
+    "configApp": "Config App & Play",
+    "useApi": "Use superAPI"
+  },
+  "dashboard": "Dashboard",
+  "getStarted": "Get Started",
+  "step1": "Step 1: Confirm whether the existing model library contains the required model for the application. If not, you need to integrate the model in Model Square page in advance.",
+  "step2": "Step 2: Add the application, associate it with the corresponding model, configure logs and monitoring, and finally trigger the model call on the page to confirm that the expected response is returned.",
+  "step3": "Step 3: Follow the guidelines to call a specific URL in the project and pass the appropriate parameters to invoke the large model without focusing on the model itself.",
+  "data": "Data",
+  "dataDesc": "Values in charts are for reference only, please refer to the actual data.",
+  "modelProvider": "Model Provider",
+  "modelType": "Model Type",
+  "integrateApp": "App Integration Ratio",
+  "hotModel": "Hot Models",
+  "traffic": "Traffic",
+  "trafficDesc": "Model call statistics in the 5-minute time window do not reflect the real-time traffic.",
+  "modelCnt": "Model",
+  "providerCnt": "Provider",
+  "appCnt": "App",
+  "typeCnt": "Type"  
+}

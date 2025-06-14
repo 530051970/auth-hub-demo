@@ -1,0 +1,14 @@
+{
+  "breadcrumb":{
+    "home": "SuperAPI",
+    "application": "应用" 
+  },
+  "title": "应用配置 & 体验",
+  "description": "使用本平台前，请在这里创建你的应用，并配置日志输出和监控，并简单验证应用可用。",
+  "createApp" : "创建你的应用",
+  "model": "模型",
+  "modelDescription": "列举平台内置的主流商用大模型，如果是本地部署或者云端部署大模型，可以点击左上角添加模型按钮添加。",
+  "provider": "厂商"
+
+  
+}

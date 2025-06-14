@@ -31,6 +31,11 @@ i18n
   .init({
     ns: [
       'auth',
+      'top-header',
+      'left-navi',
+      'summary',
+      'model',
+      'application'
     ],
     defaultNS: 'common',
     fallbackLng: 'en',

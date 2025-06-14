@@ -13,6 +13,7 @@
 
 import { CfnCondition, CfnOutput, CfnParameter, CfnStack, Duration, Fn } from 'aws-cdk-lib';
 import { AuthorizationType, Cors, EndpointType, LambdaIntegration, MethodLoggingLevel, RestApi, TokenAuthorizer } from 'aws-cdk-lib/aws-apigateway';
+import { Distribution } from 'aws-cdk-lib/aws-cloudfront';
 import { CfnUserPool, CfnUserPoolUser, CfnUserPoolUserToGroupAttachment, OAuthScope, UserPool, UserPoolClient, UserPoolDomain } from 'aws-cdk-lib/aws-cognito';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Function, Code, Runtime, LayerVersion, Alias } from 'aws-cdk-lib/aws-lambda';
@@ -26,10 +27,11 @@ import path = require('path');
 export interface AuthHubProps {
   readonly solutionName: string;
   readonly stage: string;
-  readonly portalBucket: Bucket;
   readonly region: string;
-  readonly url: string;
+  readonly portalBucket: Bucket;
+  readonly distribution: Distribution;
   }
+
 
   /**
    * Construct to integrate auth assets
@@ -137,7 +139,7 @@ export interface AuthHubProps {
             parameters: {
               Body: JSON.stringify({
                 api_url: this.apigw.url,
-                app_url: props.url,
+                app_url: props.distribution.distributionDomainName,
               }),
               Bucket: props.portalBucket.bucketName,
               CacheControl: 'max-age=0, no-cache, no-store, must-revalidate',

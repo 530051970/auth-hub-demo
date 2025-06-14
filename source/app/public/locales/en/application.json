@@ -1,0 +1,11 @@
+{
+  "breadcrumb":{
+    "home": "SuperAPI",
+    "application": "Application" 
+  },
+  "title": "Configuration & Playground",
+  "description": " Please create your application before using this API, config log output and monitoring, and verify that the API is available",
+  "createApp" : "Create your Application"
+
+  
+}
