@@ -256,10 +256,10 @@ const Login: FC = () => {
       }
     )
     await signInWithRedirect({
-        provider:{
-          custom: midwayConfig?.provider
-        }
-        })
+      provider:{
+        custom: midwayConfig?.provider
+      }
+      })
     } catch (error){
       if ((error as { name: string }).name === 'UserAlreadyAuthenticatedException') {
         console.warn('User already signed in. Fetching user info...');
@@ -374,7 +374,6 @@ const Login: FC = () => {
 };
 
 export default Login;
-
 
 const processForUserAlreadySignin = async(navigate) => {
   try {

@@ -3,7 +3,6 @@ import { AlertType, ApiRequest } from 'common/types';
 import { alertMsg } from 'common/utils';
 import { COMMON_ALERT_TYPE } from 'pages/common-alert/types/data_config';
 
-
 const STORAGE_BACK_URL = '';
 
 export const BASE_URL =

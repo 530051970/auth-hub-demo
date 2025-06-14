@@ -1,4 +1,4 @@
-# 史上功能最齐全的身份认证系统-多OIDC共存的身份认证脚手架
+# 多OIDC共存的身份认证脚手架
 
 [English](README.md) | 简体中文
 
@@ -27,19 +27,23 @@
 
 
 ### 方案展示
-
+OIDC登录
 ![demo](/source/app/public/imgs/demo.png)
+创建账号
 ![register](/source/app/public/imgs/register.png)
+找回密码
 ![findPW](/source/app/public/imgs/findPwd.png)
+主页
 ![home](/source/app/public/imgs/home.png)
 
 链接：https://deu59wuttwjgy.cloudfront.net 
-    （Authing：用户名和密码均为demo）
+ (Authing：用户名和密码均为demo）
+ (Amazon内部用户直接点击最下面"Amazon Midway 认证"即可登录)
 
 ### 如何使用
 #### 文档结构
 该脚手架的内部组织如下，开发者在使用过程中只需要根据业务需要修改红色部分文件即可。
-```javascript
+```bash
 Auth Hub Demo
 ├── LICENSE
 ├── bin
@@ -120,74 +124,62 @@ cd auth-hub-demo
 
 步骤 3: 在编辑器中打开配置文件自定义登录信息
 前端：source/app/public/config.yaml
-```json
-project: "Auth Hub Demo"                               
+```bash
+project: "AUTH-HUB DEMO"
 version: "0.0.1"
 author: "IndustryBuilders Team"
 login:
   user: 
-    label: "Username"
     value: "username"
     disabled: true
   sns: 
-    label: "SNS Code"
     value: "sns"
     disabled: true
   oidc:
-    label: "OIDC"
     value: "oidc"
     providers:
-      - name: "Authing"
-        iconUrl: "authing"
-        description: "Authentication service for ensuring application security"
+      - name: "authing"
+        label: "Authing"
         clientId: "66b769cf5c2d439dfd37f237"
         redirectUri: "https://demo-center.authing.cn"
-        issuer: ""
-        audience: ""
-      - name: "Keycloak"
-        iconUrl: "keycloak"
-        description: "Open Source Identity and Access Management"
-        clientId: "668d3fa8e264cf3675dcc42a"
-        redirectUri: "https://intelli-agent.authing.cn"
-        diabled: true
-  third:
-    - type: "google"
-      iconUrlSelected: "google_in"
-      iconUrl: "google"
-      iconStyle: {"width":39,"marginTop":-2}
-    - type: "facebook"
-      iconUrlSelected: "facebook_in"
-      iconUrl: "facebook"
-      iconStyle: {"width":34}
-    - type: "linkedin"
-      iconUrlSelected: "linkedin_in"
-      iconUrl: "linkedin"
-      iconStyle: {"width":35}
+  sso:
+    midway:
+      user_pool_id: us-east-1_IM5zGhc8w
+      user_pool_client_id: 2m165ontae26nt91gesos569pl
+      auth:
+        domain: us-east-1im5zghc8w.auth.us-east-1.amazoncognito.com
+        scopes:
+          - openid
+          - email
+          - aws.cognito.signin.user.admin
+          - profile
+        redirect_signin:
+          - https://deu59wuttwjgy.cloudfront.net/login
+          - http://localhost:3088/login
+        redirect_signout:
+          - https://deu59wuttwjgy.cloudfront.net
+          - http://localhost:3088
 ```
+> ⚠️ **警告**: 如果需要配置Midway认证，需要提前进入aws cognito控制台创建midway provider，并设置配置所需的信息，具体操作请咨询作者。
+
 后端：lib/auth-hub/config.yaml
-```json
+```bash
 oidc_providers:
   authing:
     clients:
       - client_id: 66b769cf5c2d439dfd37f237
         client_secret: 7dab7e589bf215fa8778609c54d90f9c
-  keycloak:
-    clients:
-      - client_id: 6fsdfdsdddddsadsf434ssd3
-        client_secret: fasded3442324dfsd8632sddsa
 ```
 
 步骤5:  部署stack
-1. 默认自带cogonito
+
 ```bash
 npm i
 npx cdk deploy 
 ```
-2. 不需要部署cognito
-```bash
-npm i
-npx cdk deploy --parameters cogonito=false
-```
+
+> ⚠️ **警告**: 部署过程中需要依赖Docker，因此在执行步骤5之前请务必打开Docker服务，并确保Docker服务正常运行。
+
 4.3 内置APIs
 |路径     |请求方式|参数       |含义      ｜
 | :----- | ---:  | :------: | :------: |

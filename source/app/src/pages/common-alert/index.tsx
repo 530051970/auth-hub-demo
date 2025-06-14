@@ -1,6 +1,5 @@
 import { Alert } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
-
 import { COMMON_ALERT_TYPE } from './types/data_config';
 import classnames from 'classnames';
 import './style.scss';
